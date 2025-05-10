@@ -3,20 +3,22 @@
 	"id": "weightless",
 	"version": "${version}",
 	"name": "Weightless",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Ooh yeah, flying",
 	"authors": [
-		"Me!"
+		"Shiny (8hiny)"
 	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
-	"license": "CC0-1.0",
-	"icon": "assets/weightless/icon.png",
+	"license": "MIT",
+	"icon": "assets/weightless/textures/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
 			"shiny.weightless.Weightless"
+		],
+		"client": [
+			"shiny.weightless.WeightlessClient"
+		],
+		"cardinal-components-entity": [
+			"shiny.weightless.ModComponents"
 		]
 	},
 	"mixins": [
@@ -28,7 +30,9 @@
 		"java": ">=17",
 		"fabric-api": "*"
 	},
-	"suggests": {
-		"another-mod": "*"
+	"custom": {
+		"cardinal-components": [
+			"weightless:weightless"
+		]
 	}
 }
