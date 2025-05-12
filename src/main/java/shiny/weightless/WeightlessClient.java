@@ -6,16 +6,21 @@ import ladysnake.satin.api.managed.ShaderEffectManager;
 import ladysnake.satin.api.managed.uniform.Uniform1f;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import shiny.weightless.client.particle.ShockwaveParticle;
+import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
 import shiny.weightless.common.component.WeightlessComponent;
 
 public class WeightlessClient implements ClientModInitializer {
 
+    //Particles
     public static final DefaultParticleType SHOCKWAVE = Registry.register(Registries.PARTICLE_TYPE, Weightless.id("shockwave"), FabricParticleTypes.simple());
 
     //Speed lines shader & uniforms
@@ -29,6 +34,17 @@ public class WeightlessClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ParticleFactoryRegistry.getInstance().register(SHOCKWAVE, ShockwaveParticle.Factory::new);
+
+        ClientPlayNetworking.registerGlobalReceiver(Weightless.FLYING_SOUND_S2C_PACKET, (client, handler, buf, sender) -> {
+            if (client.world != null && client.player != null) {
+                int id = buf.readVarInt();
+                Entity entity = client.world.getEntityById(id);
+
+                if (entity instanceof PlayerEntity player) {
+                    client.getSoundManager().play(new WeightlessFlyingSoundInstance(player, player == client.player));
+                }
+            }
+        });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.world != null) {

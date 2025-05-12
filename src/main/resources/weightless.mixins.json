@@ -13,7 +13,6 @@
   },
   "client": [
     "client.ClientPlayerEntityMixin",
-    "client.ElytraSoundInstanceMixin",
     "client.PlayerEntityModelMixin",
     "client.PlayerEntityRendererMixin"
   ]

@@ -2,8 +2,13 @@ package shiny.weightless.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.*;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -15,12 +20,14 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import shiny.weightless.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
 
     @Unique private boolean wasSprinting = false;
+    @Unique private boolean wasSprintFlying = false;
     @Unique private int startFlyingTicks = 0;
 
     public LivingEntityMixin(EntityType<?> type, World world) {
@@ -28,15 +35,24 @@ public abstract class LivingEntityMixin extends Entity {
     }
 
     @Inject(method = "tick", at = @At(value = "HEAD"))
-    private void weightless$updateFlyingDimensions(CallbackInfo ci) {
+    private void weightless$sprintingCallback(CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
 
         if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
-            if (this.isSprinting() && !this.wasSprinting) {
+            boolean bl = entity.isSprinting();
+            if (bl && WeightlessComponent.flying(player) && !this.wasSprintFlying) {
+                sendSoundPackets(player);
+                this.wasSprintFlying = true;
+            }
+            else if (this.wasSprintFlying && (!bl || !WeightlessComponent.flying(player))) {
+                this.wasSprintFlying = false;
+            }
+
+            if (bl && !this.wasSprinting) {
                 this.calculateDimensions();
                 this.wasSprinting = true;
             }
-            else if (!this.isSprinting() && this.wasSprinting) {
+            else if (!bl && this.wasSprinting) {
                 this.calculateDimensions();
                 this.wasSprinting = false;
             }
@@ -150,5 +166,18 @@ public abstract class LivingEntityMixin extends Entity {
             }
         }
         return false;
+    }
+
+    @Unique
+    private static void sendSoundPackets(PlayerEntity source) {
+        if (!source.getWorld().isClient()) {
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeVarInt(source.getId());
+
+            for (ServerPlayerEntity recipient : PlayerLookup.tracking(source)) {
+                ServerPlayNetworking.send(recipient, Weightless.FLYING_SOUND_S2C_PACKET, buf);
+            }
+            ServerPlayNetworking.send((ServerPlayerEntity) source, Weightless.FLYING_SOUND_S2C_PACKET, buf);
+        }
     }
 }

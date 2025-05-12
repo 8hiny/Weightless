@@ -1,0 +1,8 @@
+{
+  "entity.weightless.flying": {
+    "subtitle": "sounds.weightless.entity.weightless.flying",
+    "sounds": [
+      "weightless:flying"
+    ]
+  }
+}
