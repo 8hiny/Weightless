@@ -1,5 +1,6 @@
 package shiny.weightless.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
@@ -18,5 +19,15 @@ public abstract class EntityMixin {
             return false;
         }
         else return true;
+    }
+
+    @ModifyReturnValue(method = "getStandingEyeHeight", at = @At(value = "RETURN"))
+    private float observations$weightlessFlyingEyeHeight(float original) {
+        Entity entity = (Entity) (Object) this;
+
+        if (entity instanceof PlayerEntity player && WeightlessComponent.flying(player) && player.isSprinting()) {
+            original = 1.275f;
+        }
+        return original;
     }
 }

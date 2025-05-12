@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.Flutterer;
 import net.minecraft.entity.LivingEntity;
@@ -26,8 +27,8 @@ import shiny.weightless.common.component.WeightlessComponent;
 public abstract class PlayerEntityMixin extends LivingEntity implements WeightlessRenderProvider {
 
     @Shadow public abstract void addExhaustion(float exhaustion);
-    @Unique private float leanAngle = 0.0f;
     @Unique private float tickDelta = 0.0f;
+    @Unique private float lastLimbAngle = 0.0f;
     @Unique private Vec3d lastMovement = Vec3d.ZERO;
 
     protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
@@ -57,6 +58,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
             return false;
         }
         return true;
+    }
+
+    @ModifyReturnValue(method = "getDimensions", at = @At(value = "RETURN"))
+    private EntityDimensions weightless$flyingDimensions(EntityDimensions original) {
+        PlayerEntity player = (PlayerEntity) (Object) this;
+
+        if (WeightlessComponent.flying(player) && player.isSprinting()) {
+            return EntityDimensions.changing(0.6f, 1.5f);
+        }
+        return original;
     }
 
     @Inject(method = "increaseTravelMotionStats", at = @At(value = "HEAD"))
@@ -97,16 +108,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
     }
 
     @Override
-    public float weightless$getLeanAngle() {
-        return this.leanAngle;
-    }
-
-    @Override
-    public void weightless$setLeanAngle(float angle) {
-        this.leanAngle = angle;
-    }
-
-    @Override
     public float getTickDelta() {
         return this.tickDelta;
     }
@@ -114,6 +115,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
     @Override
     public void setTickDelta(float tickDelta) {
         this.tickDelta = tickDelta;
+    }
+
+    @Override
+    public float getLastLimbAngle() {
+        return this.lastLimbAngle;
+    }
+
+    @Override
+    public void setLastLimbAngle(float lastLimbAngle) {
+        this.lastLimbAngle = lastLimbAngle;
     }
 
     @Override

@@ -2,7 +2,6 @@ package shiny.weightless;
 
 import net.fabricmc.api.ModInitializer;
 
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;

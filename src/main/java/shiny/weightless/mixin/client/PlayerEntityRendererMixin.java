@@ -36,9 +36,10 @@ public abstract class PlayerEntityRendererMixin extends LivingEntityRenderer<Abs
 
     @Inject(method = "render(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "HEAD"))
     private void weightless$onRender(AbstractClientPlayerEntity player, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider provider, int light, CallbackInfo ci) {
-        if (WeightlessComponent.flying(player)) {
+        if (WeightlessComponent.flying(player) && !player.isSneaking()) {
             matrices.push();
             if (player.isSprinting()) {
+                //WIP, trail renderer currently looks like crap
                 //TrailRenderer.render(MinecraftClient.getInstance(), matrices, provider, player, 1.5f, light);
             }
             WeightlessPosing.updateTransforms(matrices, player, tickDelta);
@@ -47,11 +48,12 @@ public abstract class PlayerEntityRendererMixin extends LivingEntityRenderer<Abs
 
     @Inject(method = "render(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "TAIL"))
     private void weightless$afterRender(AbstractClientPlayerEntity player, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider provider, int light, CallbackInfo ci) {
-        if (WeightlessComponent.flying(player)) {
+        if (WeightlessComponent.flying(player) && !player.isSneaking()) {
             matrices.pop();
         }
     }
 
+    //Old version of the renderer which mimicked elytra flight
 //    @Inject(method = "setupTransforms(Lnet/minecraft/client/network/AbstractClientPlayerEntity;Lnet/minecraft/client/util/math/MatrixStack;FFF)V", at = @At(value = "HEAD"), cancellable = true)
 //    private void weightless$setUpTransforms(AbstractClientPlayerEntity player, MatrixStack matrixStack, float animationProgress, float bodyYaw, float tickDelta, CallbackInfo ci) {
 //        if (WeightlessComponent.flying(player) && !player.horizontalCollision && player.isSprinting()) {

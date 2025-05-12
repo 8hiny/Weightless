@@ -47,9 +47,6 @@ public class TrailRenderer {
                 Vec3d dir = last.subtract(point).normalize();
                 Vec3d normal = camPos.subtract(point).crossProduct(dir).normalize();
 
-                Vec3d dir1 = point.subtract(last).normalize();
-                Vec3d normal1 = camPos.subtract(last).crossProduct(dir1).normalize();
-
                 Vec3d a = last.add(normal);
                 Vec3d b = last.subtract(normal);
                 Vec3d c = point.add(normal);

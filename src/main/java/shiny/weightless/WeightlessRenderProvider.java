@@ -5,11 +5,11 @@ import net.minecraft.util.math.Vec3d;
 
 public interface WeightlessRenderProvider {
 
-    void weightless$setLeanAngle(float angle);
-    float weightless$getLeanAngle();
-
     void setTickDelta(float tickDelta);
     float getTickDelta();
+
+    void setLastLimbAngle(float limbAngle);
+    float getLastLimbAngle();
 
     void setLastMovement(Vec3d movement);
     Vec3d getLastMovement();

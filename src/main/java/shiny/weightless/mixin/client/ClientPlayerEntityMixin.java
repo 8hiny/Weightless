@@ -42,7 +42,6 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
     @Inject(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;tickMovement()V", shift = At.Shift.AFTER))
     private void weightless$playFlyingSound(CallbackInfo ci) {
         if (this.startedSprinting) {
-
             if (WeightlessComponent.has(this) && !this.horizontalCollision && this.isSprinting()) {
                 ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
                 this.client.getSoundManager().play(new ElytraSoundInstance(player));

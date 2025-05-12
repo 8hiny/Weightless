@@ -23,16 +23,16 @@ public class WeightlessPosing {
         if (player instanceof WeightlessRenderProvider provider) {
             float tickDelta = provider.getTickDelta();
 
-            //Interpolate with last values
+            //Get current movement
             Vec3d lastMovement = provider.getLastMovement();
             Vec3d velocity = new Vec3d(player.getX() - player.prevX, player.getY() - player.prevY, player.getZ() - player.prevZ);
-            Vec3d movement = WeightlessRenderProvider.relativeMovement(velocity, player.getYaw(), player.isSprinting());
-            provider.setLastMovement(movement);
+            Vec3d movement = WeightlessRenderProvider.relativeMovement(velocity, player.getYaw(tickDelta), player.isSprinting());
             movement = movement.lerp(lastMovement, tickDelta);
+            provider.setLastMovement(movement);
 
             double x = movement.x;
             double y = movement.y;
-            double z = movement.z;
+            double z = movement.z + Math.abs(x) * 0.5;
 
             double bound = Math.PI / 2.5;
             // Apply rotations

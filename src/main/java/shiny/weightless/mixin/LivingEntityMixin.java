@@ -4,56 +4,103 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.entity.*;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockCollisionSpliterator;
 import net.minecraft.world.World;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import shiny.weightless.common.component.WeightlessComponent;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
 
-    @Shadow public abstract float getMovementSpeed();
-    @Shadow @Final public LimbAnimator limbAnimator;
+    @Unique private boolean wasSprinting = false;
+    @Unique private int startFlyingTicks = 0;
 
     public LivingEntityMixin(EntityType<?> type, World world) {
         super(type, world);
     }
 
+    @Inject(method = "tick", at = @At(value = "HEAD"))
+    private void weightless$updateFlyingDimensions(CallbackInfo ci) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+
+        if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
+            if (this.isSprinting() && !this.wasSprinting) {
+                this.calculateDimensions();
+                this.wasSprinting = true;
+            }
+            else if (!this.isSprinting() && this.wasSprinting) {
+                this.calculateDimensions();
+                this.wasSprinting = false;
+            }
+        }
+    }
+
     @WrapOperation(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;travel(Lnet/minecraft/util/math/Vec3d;)V"))
     private void weightless$crosshairBasedMovement(LivingEntity entity, Vec3d movementInput, Operation<Void> original) {
-        float speed = this.getMovementSpeed() * (this.isSprinting() ? 1.0f : 0.35f);
-        Vec3d movement = weightlessMovement(movementInput, speed, this.getPitch(), this.getYaw());
-        Vec3d velocity = this.getVelocity().add(movement).multiply(0.85, 0.85, 0.85);
+        //Check if can start flying
+        //Continuously count up start flying ticks once can start flying
+        //Only check collision if start flying ticks are 0
 
-        Vec3d vec3d = ((EntityAccessor) this).weightless$adjustMovementForCollisions(velocity);
-        this.verticalCollision = velocity.y != vec3d.y;
+        if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
+            float speed = entity.getMovementSpeed() * (entity.isSprinting() ? 1.0f : 0.35f);
+            Vec3d movement = weightlessMovement(movementInput, speed, entity.getPitch(), entity.getYaw());
+            Vec3d velocity = entity.getVelocity().add(movement).multiply(0.85, 0.85, 0.85);
 
-        if (entity instanceof PlayerEntity player && WeightlessComponent.flying(player)) {
-            if (this.isLogicalSideForUpdatingMovement()) {
-                double x = velocity.x;
-                double y = velocity.y;
-                double z = velocity.z;
+            boolean bl2 = !WeightlessComponent.flying(player);
+            bl2 &= (entity.getPitch() < 0.0 && movementInput.z > 0.0) || (entity.getPitch() > 0.0 && movementInput.z < 0.0);
 
-                if (Math.abs(x) < 0.003) {
-                    x = 0.0;
+            boolean bl3 = false;
+            if (this.startFlyingTicks == 0) {
+                if (bl2) {
+                    this.startFlyingTicks++;
                 }
-                if (Math.abs(y) < 0.003) {
-                    y = 0.0;
+                else {
+                    bl3 = checkCollision(entity);
+                    entity.setOnGround(bl3, velocity);
                 }
-                if (Math.abs(z) < 0.003) {
-                    z = 0.0;
-                }
-                velocity = new Vec3d(x, y, z);
-
-                this.setVelocity(velocity);
-                this.move(MovementType.SELF, this.getVelocity());
             }
-            this.limbAnimator.updateLimbs(0.0f, 0.1f);
+            WeightlessComponent.get(player).setFlying(!bl3);
+
+            if (WeightlessComponent.flying(player)) {
+                if (entity.isLogicalSideForUpdatingMovement()) {
+                    double x = velocity.x;
+                    double y = velocity.y;
+                    double z = velocity.z;
+
+                    if (entity.isSneaking()) y *= 0.5;
+
+                    if (Math.abs(x) < 0.003) {
+                        x = 0.0;
+                    }
+                    if (Math.abs(y) < 0.003) {
+                        y = 0.0;
+                    }
+                    if (Math.abs(z) < 0.003) {
+                        z = 0.0;
+                    }
+                    velocity = new Vec3d(x, y, z);
+
+                    entity.setVelocity(velocity);
+                    entity.move(MovementType.SELF, entity.getVelocity());
+                    entity.fallDistance = 0.1f;
+                }
+                if (entity.isSneaking()) entity.updateLimbs(false);
+                else entity.limbAnimator.updateLimbs(0.0f, 0.1f);
+            }
+            else {
+                original.call(entity, movementInput);
+            }
+
+            if (this.startFlyingTicks < 5 && this.startFlyingTicks > 0) this.startFlyingTicks++;
+            else this.startFlyingTicks = 0;
         }
         else {
             original.call(entity, movementInput);
@@ -88,5 +135,20 @@ public abstract class LivingEntityMixin extends Entity {
                     vec3d.z * g + vec3d.x * f
             );
         }
+    }
+
+    @Unique
+    private static boolean checkCollision(Entity entity) {
+        World world = entity.getWorld();
+        Box box = entity.getBoundingBox().stretch(0, -0.01, 0);
+        BlockCollisionSpliterator<VoxelShape> spliterator = new BlockCollisionSpliterator<>(world, entity, box, false, (mutable, voxelShape) -> voxelShape);
+
+        while (spliterator.hasNext()) {
+            VoxelShape shape = spliterator.next();
+            if (!shape.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

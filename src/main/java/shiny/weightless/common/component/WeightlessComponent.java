@@ -14,6 +14,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     private final PlayerEntity provider;
     private int remainingStunTicks;
     private boolean active;
+    private boolean flying;
     private final Trail trail = new Trail(2);
 
     public WeightlessComponent(PlayerEntity provider) {
@@ -61,6 +62,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
 
     public void reset() {
         this.active = false;
+        this.flying = false;
         this.remainingStunTicks = 0;
         sync();
     }
@@ -68,12 +70,14 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     @Override
     public void readFromNbt(NbtCompound tag) {
         this.active = tag.getBoolean("Active");
+        this.flying = tag.getBoolean("Flying");
         this.remainingStunTicks = tag.getInt("StunTicks");
     }
 
     @Override
     public void writeToNbt(NbtCompound tag) {
         tag.putBoolean("Active", this.active);
+        tag.putBoolean("Flying", this.flying);
         tag.putInt("StunTicks", this.remainingStunTicks);
     }
 
@@ -88,10 +92,17 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
 
     public boolean flying() {
         return this.has()
+                && this.flying
                 && !this.provider.isSwimming()
                 && !this.provider.isUsingRiptide()
-                && !this.provider.isFallFlying()
-                && (!this.provider.verticalCollision || this.provider.getPitch() < 0.0);
+                && !this.provider.isFallFlying();
+    }
+
+    public void setFlying(boolean flying) {
+        if (flying != this.flying) {
+            this.flying = flying;
+            sync();
+        }
     }
 
     public Trail getTrail() {

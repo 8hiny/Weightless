@@ -32,9 +32,12 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
+	//Cardinal components
 	modImplementation("dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cca_version}")
 	modImplementation("dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cca_version}")
-	modImplementation("dev.onyxstudios.cardinal-components-api:cardinal-components-world:${project.cca_version}")
+
+	//Satin
+	modImplementation "io.github.ladysnake:satin:${satin_version}"
 }
 
 processResources {

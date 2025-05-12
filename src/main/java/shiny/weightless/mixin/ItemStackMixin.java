@@ -21,15 +21,14 @@ public abstract class ItemStackMixin {
     @Inject(method = "use", at = @At(value = "HEAD"), cancellable = true)
     private void weightless$preventItemUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
         ItemStack stack = user.getStackInHand(hand);
-
-        if (WeightlessComponent.has(user) && stack.isIn(Weightless.PROJECTILE_WEAPONS)) {
+        if (WeightlessComponent.flying(user) && stack.isIn(Weightless.PROJECTILE_WEAPONS)) {
             cir.setReturnValue(TypedActionResult.fail(stack));
         }
     }
 
     @WrapWithCondition(method = "usageTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/Item;usageTick(Lnet/minecraft/world/World;Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;I)V"))
     private boolean weightless$preventItemUsageTick(Item instance, World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-        if (user instanceof PlayerEntity && WeightlessComponent.get((PlayerEntity) user).has() && stack.isIn(Weightless.PROJECTILE_WEAPONS)) {
+        if (user instanceof PlayerEntity player && WeightlessComponent.flying(player) && stack.isIn(Weightless.PROJECTILE_WEAPONS)) {
             return false;
         }
         return true;
