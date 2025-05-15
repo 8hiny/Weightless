@@ -6,9 +6,12 @@ import ladysnake.satin.api.managed.ShaderEffectManager;
 import ladysnake.satin.api.managed.uniform.Uniform1f;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.DefaultParticleType;
@@ -31,6 +34,14 @@ public class WeightlessClient implements ClientModInitializer {
     private static float flySpeed = 0.0f;
     private static boolean flying = false;
 
+    //Keybinds
+    public static KeyBinding TOGGLE_WEIGHTLESS = KeyBindingHelper.registerKeyBinding(new KeyBinding("keybind.weightless.toggle",InputUtil.UNKNOWN_KEY.getCode(), "key.categories.weightless"));
+    public static KeyBinding AUTOPILOT = KeyBindingHelper.registerKeyBinding(new KeyBinding("keybind.weightless.autopilot", InputUtil.UNKNOWN_KEY.getCode(), "key.categories.weightless"));
+    public static boolean wasWeightlessPressed = false;
+    public static boolean wasAutopilotPressed = false;
+    public static boolean weightlessActive = true;
+    public static boolean autopilotActive = false;
+
     @Override
     public void onInitializeClient() {
         ParticleFactoryRegistry.getInstance().register(SHOCKWAVE, ShockwaveParticle.Factory::new);
@@ -46,15 +57,39 @@ public class WeightlessClient implements ClientModInitializer {
             }
         });
 
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.world != null) {
-                worldTime = client.world.getTime();
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            if (TOGGLE_WEIGHTLESS.isPressed() && !wasWeightlessPressed) {
+                weightlessActive = !weightlessActive;
+                wasWeightlessPressed = true;
+                TOGGLE_WEIGHTLESS.setPressed(false);
             }
+            else if (wasWeightlessPressed) {
+                wasWeightlessPressed = false;
+            }
+
+            if (AUTOPILOT.isPressed() && !wasAutopilotPressed) {
+                autopilotActive = !autopilotActive;
+                wasAutopilotPressed = true;
+                AUTOPILOT.setPressed(false);
+            }
+            else if (wasAutopilotPressed) {
+                wasAutopilotPressed = false;
+            }
+            WeightlessComponent.clientTick(client);
+        });
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
-                flying = WeightlessComponent.flying(client.player) && client.player.isSprinting() && !client.player.isUsingItem();
+                boolean bl = client.player.isSprinting() || autopilotActive;
+                flying = WeightlessComponent.flying(client.player) && bl && !client.player.isUsingItem();
                 flySpeed = (float) Math.min(client.player.getVelocity().horizontalLength(), 1.0f);
             }
+            if (client.world != null) {
+                worldTime = client.world.getTime();
+                VelocityTracker.update(client);
+            }
         });
+
         ShaderEffectRenderCallback.EVENT.register(tickDelta -> {
             if (flying) {
                 WORLD_TIME.set(worldTime + tickDelta);

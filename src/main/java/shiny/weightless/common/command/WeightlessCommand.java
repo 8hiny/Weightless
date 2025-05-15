@@ -18,9 +18,10 @@ public class WeightlessCommand {
     public static void init() {
         CommandRegistrationCallback.EVENT.register((dispatcher, commandRegistryAccess, registrationEnvironment) -> {
             dispatcher.register(literal("weightless")
+                    .requires(source -> source.hasPermissionLevel(2))
                     .then(argument("player", EntityArgumentType.player())
                             .then(argument("operation", StringArgumentType.string())
-                                    .suggests((ctx, builder) -> CommandSource.suggestMatching(addOrRemove(), builder))
+                                    .suggests((ctx, builder) -> CommandSource.suggestMatching(addOrRevoke(), builder))
                                     .executes(ctx -> {
                                         boolean bl = StringArgumentType.getString(ctx, "operation").equals("grant");
                                         return execute(EntityArgumentType.getPlayer(ctx, "player"), bl);
@@ -40,10 +41,10 @@ public class WeightlessCommand {
         return 0;
     }
 
-    private static List<String> addOrRemove() {
+    private static List<String> addOrRevoke() {
         List<String> strings = new ArrayList<>();
         strings.add("grant");
-        strings.add("remove");
+        strings.add("revoke");
         return strings;
     }
 }

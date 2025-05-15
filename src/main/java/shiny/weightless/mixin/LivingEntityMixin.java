@@ -39,7 +39,7 @@ public abstract class LivingEntityMixin extends Entity {
         LivingEntity entity = (LivingEntity) (Object) this;
 
         if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
-            boolean bl = entity.isSprinting();
+            boolean bl = entity.isSprinting() || WeightlessComponent.autopilot(player);
             if (bl && WeightlessComponent.flying(player) && !this.wasSprintFlying) {
                 sendSoundPackets(player);
                 this.wasSprintFlying = true;
@@ -61,17 +61,11 @@ public abstract class LivingEntityMixin extends Entity {
 
     @WrapOperation(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;travel(Lnet/minecraft/util/math/Vec3d;)V"))
     private void weightless$crosshairBasedMovement(LivingEntity entity, Vec3d movementInput, Operation<Void> original) {
-        //Check if can start flying
-        //Continuously count up start flying ticks once can start flying
-        //Only check collision if start flying ticks are 0
-
         if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
-            float speed = entity.getMovementSpeed() * (entity.isSprinting() ? 1.0f : 0.35f);
-            Vec3d movement = weightlessMovement(movementInput, speed, entity.getPitch(), entity.getYaw());
-            Vec3d velocity = entity.getVelocity().add(movement).multiply(0.85, 0.85, 0.85);
+            boolean bl = WeightlessComponent.autopilot(player);
 
             boolean bl2 = !WeightlessComponent.flying(player);
-            bl2 &= (entity.getPitch() < 0.0 && movementInput.z > 0.0) || (entity.getPitch() > 0.0 && movementInput.z < 0.0);
+            bl2 &= (entity.getPitch() < -10 && movementInput.z > 0.0) || (entity.getPitch() > 10 && movementInput.z < 0.0) || bl;
 
             boolean bl3 = false;
             if (this.startFlyingTicks == 0) {
@@ -80,12 +74,17 @@ public abstract class LivingEntityMixin extends Entity {
                 }
                 else {
                     bl3 = checkCollision(entity);
-                    entity.setOnGround(bl3, velocity);
                 }
             }
             WeightlessComponent.get(player).setFlying(!bl3);
 
             if (WeightlessComponent.flying(player)) {
+                if (bl) movementInput = new Vec3d(0, 0, 1);
+                float speed = entity.getMovementSpeed() * (entity.isSprinting() || bl ? 1.0f : 0.35f);
+
+                Vec3d movement = weightlessMovement(movementInput, speed, entity.getPitch(), entity.getYaw());
+                Vec3d velocity = entity.getVelocity().add(movement).multiply(0.85, 0.85, 0.85);
+
                 if (entity.isLogicalSideForUpdatingMovement()) {
                     double x = velocity.x;
                     double y = velocity.y;
@@ -110,6 +109,8 @@ public abstract class LivingEntityMixin extends Entity {
                 }
                 if (entity.isSneaking()) entity.updateLimbs(false);
                 else entity.limbAnimator.updateLimbs(0.0f, 0.1f);
+
+                entity.setOnGround(bl3, velocity);
             }
             else {
                 original.call(entity, movementInput);

@@ -21,6 +21,9 @@ repositories {
 		name = "Ladysnake Mods"
 		url = "https://maven.ladysnake.org/releases"
 	}
+	maven {
+		url = "https://api.modrinth.com/maven"
+	}
 }
 
 dependencies {
@@ -38,6 +41,9 @@ dependencies {
 
 	//Satin
 	modImplementation "io.github.ladysnake:satin:${satin_version}"
+
+	//Midnightlib
+	modImplementation include ("maven.modrinth:midnightlib:${project.midnightlib_version}")
 }
 
 processResources {

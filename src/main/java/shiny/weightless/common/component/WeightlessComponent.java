@@ -2,20 +2,29 @@ package shiny.weightless.common.component;
 
 import dev.onyxstudios.cca.api.v3.component.sync.AutoSyncedComponent;
 import dev.onyxstudios.cca.api.v3.component.tick.CommonTickingComponent;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import shiny.weightless.ModComponents;
+import shiny.weightless.Weightless;
+import shiny.weightless.WeightlessClient;
 import shiny.weightless.client.trail.Trail;
 
 public class WeightlessComponent implements AutoSyncedComponent, CommonTickingComponent {
 
     private final PlayerEntity provider;
-    private int remainingStunTicks;
-    private boolean active;
-    private boolean flying;
     private final Trail trail = new Trail(2);
+    private int remainingStunTicks;
+    private boolean enabled;
+    private boolean flying;
+    private boolean toggled = true;
+    private boolean autopilot = false;
 
     public WeightlessComponent(PlayerEntity provider) {
         this.provider = provider;
@@ -33,8 +42,32 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         return ModComponents.WEIGHTLESS.get(player).flying();
     }
 
+    public static boolean autopilot(@NotNull PlayerEntity player) {
+        return ModComponents.WEIGHTLESS.get(player).autopilot();
+    }
+
     public void sync() {
-        ModComponents.WEIGHTLESS.sync(provider);
+        ModComponents.WEIGHTLESS.sync(this.provider);
+    }
+
+    public static void clientTick(MinecraftClient client) {
+        ModComponents.WEIGHTLESS.maybeGet(client.player).ifPresent(component -> {
+            boolean toggled = WeightlessClient.weightlessActive;
+            boolean autopilot = WeightlessClient.autopilotActive;
+
+            if (component.toggled != toggled) {
+                PacketByteBuf buf = PacketByteBufs.create();
+                buf.writeBoolean(toggled);
+                ClientPlayNetworking.send(Weightless.WEIGHTLESS_TOGGLE_C2S_PACKET, buf);
+                component.toggled = toggled;
+            }
+            if (component.autopilot != autopilot) {
+                PacketByteBuf buf = PacketByteBufs.create();
+                buf.writeBoolean(autopilot);
+                ClientPlayNetworking.send(Weightless.AUTOPILOT_TOGGLE_C2S_PACKET, buf);
+                component.autopilot = autopilot;
+            }
+        });
     }
 
     @Override
@@ -45,23 +78,28 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     @Override
     public void clientTick() {
         tick();
-
         Vec3d pos = new Vec3d(this.provider.getX(), this.provider.getBodyY(0.5), this.provider.getZ());
         this.trail.addPoint(pos);
         this.trail.tick();
     }
 
+    public boolean autopilot() {
+        return this.autopilot && this.provider.getHungerManager().getFoodLevel() > 6.0f && canFly(this.provider);
+    }
+
     public boolean has() {
-        return this.active;
+        return this.enabled;
     }
 
     public void attain() {
-        this.active = true;
+        this.enabled = true;
         sync();
     }
 
     public void reset() {
-        this.active = false;
+        this.enabled = false;
+        this.toggled = true;
+        this.autopilot = false;
         this.flying = false;
         this.remainingStunTicks = 0;
         sync();
@@ -69,14 +107,18 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
 
     @Override
     public void readFromNbt(NbtCompound tag) {
-        this.active = tag.getBoolean("Active");
+        this.enabled = tag.getBoolean("Enabled");
+        this.toggled = tag.getBoolean("Toggled");
+        this.autopilot = tag.getBoolean("Autopilot");
         this.flying = tag.getBoolean("Flying");
         this.remainingStunTicks = tag.getInt("StunTicks");
     }
 
     @Override
     public void writeToNbt(NbtCompound tag) {
-        tag.putBoolean("Active", this.active);
+        tag.putBoolean("Enabled", this.enabled);
+        tag.putBoolean("Toggled", this.toggled);
+        tag.putBoolean("Autopilot", this.autopilot);
         tag.putBoolean("Flying", this.flying);
         tag.putInt("StunTicks", this.remainingStunTicks);
     }
@@ -91,11 +133,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     }
 
     public boolean flying() {
-        return this.has()
-                && this.flying
-                && !this.provider.isSwimming()
-                && !this.provider.isUsingRiptide()
-                && !this.provider.isFallFlying();
+        return this.has() && this.toggled && this.flying && canFly(this.provider);
     }
 
     public void setFlying(boolean flying) {
@@ -105,7 +143,52 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         }
     }
 
+    public void setToggled(boolean toggled) {
+        this.toggled = toggled;
+        sync();
+    }
+
+    public void setAutopilot(boolean autopilot) {
+        this.autopilot = autopilot;
+        sync();
+    }
+
     public Trail getTrail() {
         return this.trail;
+    }
+
+    public static boolean canFly(PlayerEntity player) {
+        return player.isPartOfGame()
+                && !player.isCreative()
+                && !player.hasVehicle()
+                && !player.isInSwimmingPose()
+                && !player.isUsingRiptide()
+                && !player.isFallFlying()
+                && !player.isSleeping()
+                && !player.isClimbing();
+    }
+
+    public static Vec3d relativeMovement(Vec3d velocity, float yaw, boolean sprinting) {
+        Vec3d movement = velocity.rotateY(yaw * (float) Math.PI / 180);
+        double x = movement.x;
+        double y = velocity.y;
+        double z = movement.z;
+
+        if (sprinting) {
+            x *= 1.1f;
+            z *= 1.25f;
+        }
+
+        double bound = Math.PI / 2.5;
+        if (y < 0.0f) {
+            x *= 1.0f - y;
+            z = MathHelper.lerp(y, z, -bound);
+        }
+
+        x = MathHelper.clamp(x, -bound, bound);
+        y = MathHelper.clamp(y, -bound, bound);
+        z = MathHelper.clamp(z, -bound, bound);
+
+        return new Vec3d(x, y, z);
     }
 }

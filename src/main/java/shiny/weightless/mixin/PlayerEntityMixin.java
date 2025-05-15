@@ -27,9 +27,7 @@ import shiny.weightless.common.component.WeightlessComponent;
 public abstract class PlayerEntityMixin extends LivingEntity implements WeightlessRenderProvider {
 
     @Shadow public abstract void addExhaustion(float exhaustion);
-    @Unique private float tickDelta = 0.0f;
     @Unique private float lastLimbAngle = 0.0f;
-    @Unique private Vec3d lastMovement = Vec3d.ZERO;
 
     protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
         super(entityType, world);
@@ -64,7 +62,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
     private EntityDimensions weightless$flyingDimensions(EntityDimensions original) {
         PlayerEntity player = (PlayerEntity) (Object) this;
 
-        if (WeightlessComponent.flying(player) && player.isSprinting()) {
+        if (WeightlessComponent.flying(player) && (player.isSprinting() || WeightlessComponent.autopilot(player))) {
             return EntityDimensions.changing(0.6f, 1.5f);
         }
         return original;
@@ -78,7 +76,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
 
             int i = Math.round((float) Math.sqrt(dx * dx + dz * dz) * 100.0f);
             if (i > 0) {
-                if (this.isSprinting()) {
+                if (this.isSprinting() || WeightlessComponent.autopilot(player)) {
                     this.addExhaustion(0.1f * (float) i * 0.007f);
                 }
                 else {
@@ -108,16 +106,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
     }
 
     @Override
-    public float getTickDelta() {
-        return this.tickDelta;
-    }
-
-    @Override
-    public void setTickDelta(float tickDelta) {
-        this.tickDelta = tickDelta;
-    }
-
-    @Override
     public float getLastLimbAngle() {
         return this.lastLimbAngle;
     }
@@ -125,15 +113,5 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
     @Override
     public void setLastLimbAngle(float lastLimbAngle) {
         this.lastLimbAngle = lastLimbAngle;
-    }
-
-    @Override
-    public Vec3d getLastMovement() {
-        return this.lastMovement;
-    }
-
-    @Override
-    public void setLastMovement(Vec3d lastMovement) {
-        this.lastMovement = lastMovement;
     }
 }

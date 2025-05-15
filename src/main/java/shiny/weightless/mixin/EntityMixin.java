@@ -15,7 +15,7 @@ public abstract class EntityMixin {
 
     @WrapWithCondition(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;fall(DZLnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;)V"))
     private boolean weightless$preventFall(Entity entity, double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
-        if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
+        if (entity instanceof PlayerEntity player && WeightlessComponent.flying(player)) {
             return false;
         }
         else return true;
@@ -25,7 +25,7 @@ public abstract class EntityMixin {
     private float observations$weightlessFlyingEyeHeight(float original) {
         Entity entity = (Entity) (Object) this;
 
-        if (entity instanceof PlayerEntity player && WeightlessComponent.flying(player) && player.isSprinting()) {
+        if (entity instanceof PlayerEntity player && WeightlessComponent.flying(player) && (player.isSprinting() || WeightlessComponent.autopilot(player))) {
             original = 1.275f;
         }
         return original;
