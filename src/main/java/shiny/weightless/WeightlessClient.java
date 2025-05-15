@@ -17,6 +17,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.text.Text;
 import shiny.weightless.client.particle.ShockwaveParticle;
 import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
 import shiny.weightless.common.component.WeightlessComponent;
@@ -42,6 +43,9 @@ public class WeightlessClient implements ClientModInitializer {
     public static boolean weightlessActive = true;
     public static boolean autopilotActive = false;
 
+    //Disconnect message for config mismatch
+    public static final Text DISCONNECT_MESSAGE = Text.translatable("message.weightless.disconnect");
+
     @Override
     public void onInitializeClient() {
         ParticleFactoryRegistry.getInstance().register(SHOCKWAVE, ShockwaveParticle.Factory::new);
@@ -52,8 +56,15 @@ public class WeightlessClient implements ClientModInitializer {
                 Entity entity = client.world.getEntityById(id);
 
                 if (entity instanceof PlayerEntity player) {
-                    client.getSoundManager().play(new WeightlessFlyingSoundInstance(player, player == client.player));
+                    WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, player == client.player);
+                    FlyingPlayerTracker.startTrackingSound(client, player, sound);
                 }
+            }
+        });
+        ClientPlayNetworking.registerGlobalReceiver(Weightless.COMPARE_CONFIG_MATCH_S2C_PACKET, (client, handler, buf, sender) -> {
+            int encoded = buf.readVarInt();
+            if (encoded != ModConfig.encode()) {
+                handler.getConnection().disconnect(DISCONNECT_MESSAGE);
             }
         });
 
@@ -81,17 +92,17 @@ public class WeightlessClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
                 boolean bl = client.player.isSprinting() || autopilotActive;
-                flying = WeightlessComponent.flying(client.player) && bl && !client.player.isUsingItem();
+                flying = WeightlessComponent.flying(client.player) && bl;
                 flySpeed = (float) Math.min(client.player.getVelocity().horizontalLength(), 1.0f);
             }
             if (client.world != null) {
                 worldTime = client.world.getTime();
-                VelocityTracker.update(client);
+                FlyingPlayerTracker.update(client);
             }
         });
 
         ShaderEffectRenderCallback.EVENT.register(tickDelta -> {
-            if (flying) {
+            if (flying && ModConfig.renderSpeedlines) {
                 WORLD_TIME.set(worldTime + tickDelta);
                 FLY_SPEED.set(flySpeed);
                 SPEED_LINES.render(tickDelta);

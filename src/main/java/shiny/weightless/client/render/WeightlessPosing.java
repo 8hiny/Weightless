@@ -9,7 +9,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import shiny.weightless.common.component.WeightlessComponent;
-import shiny.weightless.VelocityTracker;
+import shiny.weightless.FlyingPlayerTracker;
 
 public class WeightlessPosing {
 
@@ -25,7 +25,7 @@ public class WeightlessPosing {
             velocity = player.lerpVelocity(tickDelta);
         }
         else {
-            velocity = VelocityTracker.getLerpedVelocity(player, tickDelta);
+            velocity = FlyingPlayerTracker.getLerpedVelocity(player, tickDelta);
         }
 
         boolean bl = player.isSprinting() || WeightlessComponent.autopilot(player);

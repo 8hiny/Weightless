@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:is_projectile",
+    "#minecraft:is_explosion",
+    "#minecraft:bypasses_invulnerability"
+  ]
+}

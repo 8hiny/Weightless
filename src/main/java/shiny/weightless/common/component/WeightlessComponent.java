@@ -12,6 +12,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import shiny.weightless.ModComponents;
+import shiny.weightless.ModConfig;
 import shiny.weightless.Weightless;
 import shiny.weightless.WeightlessClient;
 import shiny.weightless.client.trail.Trail;
@@ -128,7 +129,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     }
 
     public void setStunned() {
-        this.remainingStunTicks = 80;
+        this.remainingStunTicks = ModConfig.stunDuration;
         sync();
     }
 

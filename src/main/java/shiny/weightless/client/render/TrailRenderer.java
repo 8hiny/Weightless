@@ -12,6 +12,7 @@ import shiny.weightless.client.trail.Trail;
 import shiny.weightless.client.trail.TrailPoint;
 import shiny.weightless.common.component.WeightlessComponent;
 
+import java.awt.*;
 import java.util.List;
 
 public class TrailRenderer {
@@ -26,7 +27,7 @@ public class TrailRenderer {
     //Get the cross product of the camera rotation and the direction from the point to the next (normal vector)
     //Position a vertex at the pos + the normal vector times half the width and at the pos - the normal vector times half the width (these are the first two vertices)
 
-    public static void render(MinecraftClient client, MatrixStack matrices, VertexConsumerProvider provider, PlayerEntity player, float width, int light) {
+    public static void render(MinecraftClient client, MatrixStack matrices, VertexConsumerProvider provider, PlayerEntity player, Color color, float width, int light) {
         VertexConsumer vertexConsumer = provider.getBuffer(RenderLayer.getEntityTranslucent(TEXTURE, false));
         Trail trail = WeightlessComponent.get(player).getTrail();
         List<TrailPoint> trailPoints = trail.getTrailPoints();
@@ -53,19 +54,19 @@ public class TrailRenderer {
                 Vec3d d = point.subtract(normal);
 
                 //Actual rendering
-                vertex(matrices, vertexConsumer, d, 0, 1, light);
-                vertex(matrices, vertexConsumer, c, 0, 0, light);
-                vertex(matrices, vertexConsumer, b, 1, 1, light);
-                vertex(matrices, vertexConsumer, a, 1, 0, light);
+                vertex(matrices, vertexConsumer, d, 0, 1, color, light);
+                vertex(matrices, vertexConsumer, c, 0, 0, color, light);
+                vertex(matrices, vertexConsumer, b, 1, 1, color, light);
+                vertex(matrices, vertexConsumer, a, 1, 0, color, light);
             }
             matrices.pop();
         }
     }
 
-    public static void vertex(MatrixStack matrices, VertexConsumer vertexConsumer, Vec3d pos, int u, int v, int light) {
+    public static void vertex(MatrixStack matrices, VertexConsumer vertexConsumer, Vec3d pos, int u, int v, Color color, int light) {
         MatrixStack.Entry entry = matrices.peek();
         vertexConsumer.vertex(entry.getPositionMatrix(), (float) pos.x, (float) pos.y, (float) pos.z)
-                .color(1.0f, 1.0f, 1.0f, 1.0f)
+                .color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha())
                 .texture(u, v)
                 .overlay(OverlayTexture.DEFAULT_UV)
                 .light(light)

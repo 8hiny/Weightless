@@ -4,14 +4,9 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.Flutterer;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.tag.DamageTypeTags;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import shiny.weightless.ModConfig;
 import shiny.weightless.WeightlessRenderProvider;
 import shiny.weightless.common.component.WeightlessComponent;
 
@@ -31,31 +27,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
 
     protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
         super(entityType, world);
-    }
-
-    @Inject(method = "damage", at = @At(value = "TAIL"))
-    private void weightless$stunOnDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
-        PlayerEntity player = (PlayerEntity) (Object) this;
-
-        if (amount >= 8 && !player.isInvulnerableTo(source) && !source.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY) && player.isAlive() && WeightlessComponent.has(player)) {
-            WeightlessComponent.get(player).setStunned();
-        }
-    }
-
-    @ModifyReturnValue(method = "isImmobile", at = @At(value = "RETURN"))
-    private boolean weightless$isImmobile(boolean original) {
-        PlayerEntity player = (PlayerEntity) (Object) this;
-        return original || WeightlessComponent.get(player).isStunned();
-    }
-
-    @WrapWithCondition(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;travel(Lnet/minecraft/util/math/Vec3d;)V"))
-    private boolean weightless$preventMovement(LivingEntity instance, Vec3d movementInput) {
-        PlayerEntity player = (PlayerEntity) (Object) this;
-        if (WeightlessComponent.get(player).isStunned()) {
-            player.updateLimbs(player instanceof Flutterer);
-            return false;
-        }
-        return true;
     }
 
     @ModifyReturnValue(method = "getDimensions", at = @At(value = "RETURN"))
@@ -70,17 +41,23 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
 
     @Inject(method = "increaseTravelMotionStats", at = @At(value = "HEAD"))
     private void weightless$applyExhaustionWhenFlying(double dx, double dy, double dz, CallbackInfo ci) {
-        PlayerEntity player = (PlayerEntity) (Object) this;
+        if (ModConfig.exhaust) {
+            PlayerEntity player = (PlayerEntity) (Object) this;
+            if (!this.hasVehicle() && WeightlessComponent.flying(player)) {
+                float exhaustion = ModConfig.hungerMultiplier;
 
-        if (!this.hasVehicle() && WeightlessComponent.flying(player)) {
-
-            int i = Math.round((float) Math.sqrt(dx * dx + dz * dz) * 100.0f);
-            if (i > 0) {
-                if (this.isSprinting() || WeightlessComponent.autopilot(player)) {
-                    this.addExhaustion(0.1f * (float) i * 0.007f);
+                if (ModConfig.reduceHungerWhenHigh && player.getPos().y >= ModConfig.altitude) {
+                    exhaustion *= ModConfig.highHungerReduction;
                 }
-                else {
-                    this.addExhaustion(0.0f * (float) i * 0.01f);
+
+                float speed = (float) (dx * dx + dy * dy + dz * dz);
+                if (exhaustion > 0.0f && speed >  1.0E-7) {
+                    if (this.isSprinting() || WeightlessComponent.autopilot(player)) {
+                        this.addExhaustion(0.04f * exhaustion);
+                    }
+                    else {
+                        this.addExhaustion(0.001f * exhaustion);
+                    }
                 }
             }
         }

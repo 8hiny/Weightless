@@ -13,8 +13,12 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import shiny.weightless.ModConfig;
+import shiny.weightless.client.render.TrailRenderer;
 import shiny.weightless.client.render.WeightlessPosing;
 import shiny.weightless.common.component.WeightlessComponent;
+
+import java.awt.*;
 
 @Mixin(LivingEntityRenderer.class)
 public class LivingEntityRendererMixin<T extends LivingEntity, M extends EntityModel<T>> {
@@ -26,6 +30,12 @@ public class LivingEntityRendererMixin<T extends LivingEntity, M extends EntityM
         if (entity instanceof AbstractClientPlayerEntity player && this.model instanceof PlayerEntityModel<?> playerModel) {
             if (!player.isSneaking() && WeightlessComponent.flying(player)) {
                 WeightlessPosing.updateTransforms(matrices, player, tickDelta);
+
+                if (ModConfig.renderTrail) {
+                    //Need to update this later to sync the client's chosen color with other players
+                    Color color = new Color(ModConfig.trailRed, ModConfig.trailBlue, ModConfig.trailGreen);
+                    TrailRenderer.render(MinecraftClient.getInstance(), matrices, vertexConsumerProvider, player, color, 1.5f, 15);
+                }
 
                 boolean bl = MinecraftClient.getInstance().options.getPerspective().isFirstPerson();
                 if (player != MinecraftClient.getInstance().player || !bl) {

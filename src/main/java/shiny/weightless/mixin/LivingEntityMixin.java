@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.*;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -20,6 +21,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import shiny.weightless.ModConfig;
 import shiny.weightless.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
 
@@ -80,8 +83,8 @@ public abstract class LivingEntityMixin extends Entity {
 
             if (WeightlessComponent.flying(player)) {
                 if (bl) movementInput = new Vec3d(0, 0, 1);
-                float speed = entity.getMovementSpeed() * (entity.isSprinting() || bl ? 1.0f : 0.35f);
 
+                float speed = getFlightSpeed(entity, entity.isSprinting() || bl);
                 Vec3d movement = weightlessMovement(movementInput, speed, entity.getPitch(), entity.getYaw());
                 Vec3d velocity = entity.getVelocity().add(movement).multiply(0.85, 0.85, 0.85);
 
@@ -90,7 +93,7 @@ public abstract class LivingEntityMixin extends Entity {
                     double y = velocity.y;
                     double z = velocity.z;
 
-                    if (entity.isSneaking()) y *= 0.5;
+                    if (entity.isSneaking() || entity.isUsingItem()) y *= 0.5;
 
                     if (Math.abs(x) < 0.003) {
                         x = 0.0;
@@ -127,11 +130,44 @@ public abstract class LivingEntityMixin extends Entity {
     //Somehow stops knockback dealt from projectiles but works on melee attacks
     @WrapOperation(method = "takeKnockback", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/Vec3d;multiply(D)Lnet/minecraft/util/math/Vec3d;"))
     private Vec3d weightless$receiveIncreasedKnockback(Vec3d vector, double value, Operation<Vec3d> original) {
-        LivingEntity entity = (LivingEntity) (Object) this;
-        if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
-            value *= 4.0f;
+        if (ModConfig.increaseKnockback) {
+            LivingEntity entity = (LivingEntity) (Object) this;
+            if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
+                value *= ModConfig.knockbackMultiplier;
+            }
         }
         return original.call(vector, value);
+    }
+
+    @Inject(method = "damage", at = @At(value = "HEAD"))
+    private void weightless$stunOnDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+        if (ModConfig.shouldStun && amount >= ModConfig.damageRequirement) {
+            LivingEntity entity = (LivingEntity) (Object) this;
+            if (entity instanceof PlayerEntity player && player.isAlive() && WeightlessComponent.flying(player)
+                    && (source.isIn(Weightless.CAN_STUN) || source.getAttacker() != null)) {
+                WeightlessComponent.get(player).setStunned();
+            }
+        }
+    }
+
+    @Unique
+    private static float getFlightSpeed(LivingEntity entity, boolean sprinting) {
+        if (entity instanceof PlayerEntity player && WeightlessComponent.get(player).isStunned()) {
+            return 0.0f;
+        }
+
+        float speed = ModConfig.movementSpeedAffectSpeed ? entity.getMovementSpeed() : 0.1f;
+        speed *= sprinting ? 1.0f : 0.35f;
+        speed *= ModConfig.speedMultiplier;
+
+        if (ModConfig.armorAffectSpeed) {
+            speed *= Math.max(0.1f, -0.025f * entity.getArmor() + 1);
+        }
+
+        if (ModConfig.increaseSpeedWhenHigh && entity.getPos().y >= ModConfig.altitude) {
+            speed *= 1.0f + ModConfig.highSpeedMultiplier;
+        }
+        return speed;
     }
 
     @Unique

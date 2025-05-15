@@ -3,7 +3,7 @@
 	"id": "weightless",
 	"version": "${version}",
 	"name": "Weightless",
-	"description": "Ooh yeah, flying",
+	"description": "A highly configurable, semi survival-friendly flight mod",
 	"authors": [
 		"Shiny (8hiny)"
 	],
