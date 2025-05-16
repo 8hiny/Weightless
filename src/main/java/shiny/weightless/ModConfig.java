@@ -37,7 +37,8 @@ public class ModConfig extends MidnightConfig {
     @Entry(category = CLIENT, min = 0, max = 255) public static int trailBlue = 255;
 
     public static int encode() {
-        String encoded = "" + altitude
+        String encoded = ""
+                + altitude
                 + exhaust
                 + hungerMultiplier
                 + reduceHungerWhenHigh

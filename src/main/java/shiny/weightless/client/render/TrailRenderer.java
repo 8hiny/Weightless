@@ -15,6 +15,13 @@ import java.util.List;
 
 public class TrailRenderer {
 
+    /**
+     * Draws a triangular trail behind a player. The player must have a list of TrailPoints stored in their WeightlessComponent.
+     * @param player The player to attach the trail to
+     * @param color The color which is interpolated to at the end of the trail
+     * @param size The size of the trail
+     * @param alpha The maximum opacity of the trail
+     */
     public static void render(MinecraftClient client, MatrixStack matrices, VertexConsumerProvider provider, PlayerEntity player, Color color, float size, int alpha) {
         VertexConsumer vertexConsumer = provider.getBuffer(ModRenderLayers.getTrail());
         Trail trail = WeightlessComponent.get(player).getTrail();
@@ -30,6 +37,7 @@ public class TrailRenderer {
             Vec3d prevC = Vec3d.ZERO;
             Vec3d prevD = Vec3d.ZERO;
 
+            //Split the trail up into seperate quads, which are each split into four triangles
             int count = trailPoints.size() - 1;
             for (int i = 0; i < count; i++) {
                 Vec3d point = trailPoints.get(i).getPos();
@@ -39,10 +47,13 @@ public class TrailRenderer {
                 Vec3d dir = next.subtract(point).normalize();
                 Vec3d normal = camPos.subtract(point).crossProduct(dir).normalize();
 
-                //Generate two points for each stored point & the equivalent alpha value
                 Vec3d[] vertices = new Vec3d[4];
-                int thisAlpha = 255;
-                int nextAlpha = 255;
+                int thisAlpha = alpha;
+                int nextAlpha = alpha;
+                Color thisColor = color;
+                Color nextColor = color;
+
+                //Generate two points for each stored point & the equivalent alpha and color values
                 float maxDistance = (float) trailPoints.get(0).getPos().squaredDistanceTo(trailPoints.get(count).getPos());
                 for (int j = 0; j < 4; j++) {
                     Vec3d vertex = j < 2 ? point : next;
@@ -54,43 +65,61 @@ public class TrailRenderer {
                     else vertex = vertex.subtract(normal.multiply(width));
 
                     int alpha1 = (int) (alpha * step);
-                    if (j == 0) thisAlpha = alpha1;
-                    else if (j == 3) nextAlpha = alpha1;
+                    Color color1 = new Color(
+                            MathHelper.clamp(MathHelper.lerp(step, 255, color.getRed()), 0, 255),
+                            MathHelper.clamp(MathHelper.lerp(step, 255, color.getGreen()), 0, 255),
+                            MathHelper.clamp(MathHelper.lerp(step, 255, color.getBlue()), 0, 255)
+                    );
+                    if (j == 0) {
+                        thisAlpha = alpha1;
+                        thisColor = color1;
+                    }
+                    else if (j == 3) {
+                        nextAlpha = alpha1;
+                        nextColor = color1;
+                    }
 
                     vertices[j] = vertex;
                 }
 
                 //Gotta revisit this in the future to reduce the vertex count by using triangle fans
                 //If not on the first step, use previous back edge vertices to fill in gaps
-                //Draw first triangle
-                int betweenAlpha = MathHelper.lerp(0.5f, thisAlpha, nextAlpha);
 
-                if (i > 0) vertex(matrices, vertexConsumer, prevC, color, thisAlpha);
-                else vertex(matrices, vertexConsumer, vertices[0], color, thisAlpha);
-                vertex(matrices, vertexConsumer, vertices[2], color, nextAlpha);
-                vertex(matrices, vertexConsumer, between, color, betweenAlpha);
+                //Transition color and alpha values for the center of the drawn quad
+                int betweenAlpha = MathHelper.lerp(0.5f, thisAlpha, nextAlpha);
+                Color betweenColor = new Color(
+                        MathHelper.clamp(MathHelper.lerp(0.5f, thisColor.getRed(), nextColor.getRed()), 0, 255),
+                        MathHelper.clamp(MathHelper.lerp(0.5f, thisColor.getGreen(), nextColor.getGreen()), 0, 255),
+                        MathHelper.clamp(MathHelper.lerp(0.5f, thisColor.getBlue(), nextColor.getBlue()), 0, 255)
+                );
+
+                //Draw first triangle
+                if (i > 0) vertex(matrices, vertexConsumer, prevC, thisColor, thisAlpha);
+                else vertex(matrices, vertexConsumer, vertices[0], thisColor, thisAlpha);
+                vertex(matrices, vertexConsumer, vertices[2], nextColor, nextAlpha);
+                vertex(matrices, vertexConsumer, between, betweenColor, betweenAlpha);
 
                 //Draw second triangle
-                vertex(matrices, vertexConsumer, vertices[2], color, nextAlpha);
-                vertex(matrices, vertexConsumer, vertices[3], color, nextAlpha);
-                vertex(matrices, vertexConsumer, between, color, betweenAlpha);
+                vertex(matrices, vertexConsumer, vertices[2], nextColor, nextAlpha);
+                vertex(matrices, vertexConsumer, vertices[3], nextColor, nextAlpha);
+                vertex(matrices, vertexConsumer, between, betweenColor, betweenAlpha);
 
                 //Draw third triangle
-                if (i > 0) vertex(matrices, vertexConsumer, prevD, color, thisAlpha);
-                else vertex(matrices, vertexConsumer, vertices[1], color, thisAlpha);
-                vertex(matrices, vertexConsumer, vertices[3], color, nextAlpha);
-                vertex(matrices, vertexConsumer, between, color, betweenAlpha);
+                if (i > 0) vertex(matrices, vertexConsumer, prevD, thisColor, thisAlpha);
+                else vertex(matrices, vertexConsumer, vertices[1], thisColor, thisAlpha);
+                vertex(matrices, vertexConsumer, vertices[3], nextColor, nextAlpha);
+                vertex(matrices, vertexConsumer, between, betweenColor, betweenAlpha);
 
                 //Draw fourth triangle
                 if (i > 0) {
-                    vertex(matrices, vertexConsumer, prevC, color, thisAlpha);
-                    vertex(matrices, vertexConsumer, prevD, color, thisAlpha);
+                    vertex(matrices, vertexConsumer, prevC, thisColor, thisAlpha);
+                    vertex(matrices, vertexConsumer, prevD, thisColor, thisAlpha);
                 }
                 else {
-                    vertex(matrices, vertexConsumer, vertices[0], color, thisAlpha);
-                    vertex(matrices, vertexConsumer, vertices[1], color, thisAlpha);
+                    vertex(matrices, vertexConsumer, vertices[0], thisColor, thisAlpha);
+                    vertex(matrices, vertexConsumer, vertices[1], thisColor, thisAlpha);
                 }
-                vertex(matrices, vertexConsumer, between, color, betweenAlpha);
+                vertex(matrices, vertexConsumer, between, betweenColor, betweenAlpha);
 
                 prevC = vertices[2];
                 prevD = vertices[3];
