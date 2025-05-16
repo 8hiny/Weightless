@@ -8,34 +8,41 @@ import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import shiny.weightless.FlyingPlayerTracker;
 import shiny.weightless.ModConfig;
 import shiny.weightless.client.render.TrailRenderer;
 import shiny.weightless.client.render.WeightlessPosing;
 import shiny.weightless.common.component.WeightlessComponent;
-
-import java.awt.*;
 
 @Mixin(LivingEntityRenderer.class)
 public class LivingEntityRendererMixin<T extends LivingEntity, M extends EntityModel<T>> {
 
     @Shadow protected M model;
 
+    @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;setupTransforms(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/util/math/MatrixStack;FFF)V"))
+    private void weightless$renderTrail(T entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
+        if (entity instanceof AbstractClientPlayerEntity player && !player.isSneaking() && WeightlessComponent.flying(player) && ModConfig.renderTrail) {
+            Vec3d velocity = player == MinecraftClient.getInstance().player ? player.lerpVelocity(tickDelta) : FlyingPlayerTracker.getLerpedVelocity(player, tickDelta);
+            double d = velocity.lengthSquared();
+            if (d > 1.0E-7) {
+                int alpha = (int) (255 * Math.min(d + 0.2f, 1.0f));
+                float size = 0.8f + (float) d;
+                TrailRenderer.render(MinecraftClient.getInstance(), matrices, vertexConsumerProvider, player, WeightlessComponent.get(player).getTrailColor(), size, alpha);
+            }
+        }
+    }
+
     @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/model/EntityModel;setAngles(Lnet/minecraft/entity/Entity;FFFFF)V", shift = At.Shift.AFTER))
-    private void weightless$flyingTransforms(T entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci) {
+    private void weightless$flyingTransforms(T entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
         if (entity instanceof AbstractClientPlayerEntity player && this.model instanceof PlayerEntityModel<?> playerModel) {
             if (!player.isSneaking() && WeightlessComponent.flying(player)) {
                 WeightlessPosing.updateTransforms(matrices, player, tickDelta);
-
-                if (ModConfig.renderTrail) {
-                    //Need to update this later to sync the client's chosen color with other players
-                    Color color = new Color(ModConfig.trailRed, ModConfig.trailBlue, ModConfig.trailGreen);
-                    TrailRenderer.render(MinecraftClient.getInstance(), matrices, vertexConsumerProvider, player, color, 1.5f, 15);
-                }
 
                 boolean bl = MinecraftClient.getInstance().options.getPerspective().isFirstPerson();
                 if (player != MinecraftClient.getInstance().player || !bl) {

@@ -32,6 +32,7 @@ public class Weightless implements ModInitializer {
 	public static final Identifier COMPARE_CONFIG_MATCH_S2C_PACKET = id("compare_config_match_packet");
 	public static final Identifier WEIGHTLESS_TOGGLE_C2S_PACKET = id("weightless_toggle_packet");
 	public static final Identifier AUTOPILOT_TOGGLE_C2S_PACKET = id("autopilot_toggle_packet");
+	public static final Identifier UPDATE_TRAIL_COLOR_C2S_PACKET = id("update_trail_color_packet");
 
 	//Tags
 	public static final TagKey<Item> PROJECTILE_WEAPONS = TagKey.of(RegistryKeys.ITEM, id("projectile_weapons"));
@@ -52,6 +53,12 @@ public class Weightless implements ModInitializer {
 		ServerPlayNetworking.registerGlobalReceiver(AUTOPILOT_TOGGLE_C2S_PACKET, (server, player, handler, buf, sender) -> {
 			boolean autopilotActive = buf.readBoolean();
 			WeightlessComponent.get(player).setAutopilot(autopilotActive);
+		});
+		ServerPlayNetworking.registerGlobalReceiver(UPDATE_TRAIL_COLOR_C2S_PACKET, (server, player, handler, buf, sender) -> {
+			int red = buf.readInt();
+			int green = buf.readInt();
+			int blue = buf.readInt();
+			WeightlessComponent.get(player).setTrailColor(red, green, blue);
 		});
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {

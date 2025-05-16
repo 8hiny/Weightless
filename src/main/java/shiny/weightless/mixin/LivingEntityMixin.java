@@ -42,7 +42,7 @@ public abstract class LivingEntityMixin extends Entity {
         LivingEntity entity = (LivingEntity) (Object) this;
 
         if (entity instanceof PlayerEntity player && WeightlessComponent.has(player)) {
-            boolean bl = entity.isSprinting() || WeightlessComponent.autopilot(player);
+            boolean bl = (entity.isSprinting() || WeightlessComponent.autopilot(player)) && WeightlessComponent.canFly(player);
             if (bl && WeightlessComponent.flying(player) && !this.wasSprintFlying) {
                 sendSoundPackets(player);
                 this.wasSprintFlying = true;
@@ -127,7 +127,6 @@ public abstract class LivingEntityMixin extends Entity {
         }
     }
 
-    //Somehow stops knockback dealt from projectiles but works on melee attacks
     @WrapOperation(method = "takeKnockback", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/Vec3d;multiply(D)Lnet/minecraft/util/math/Vec3d;"))
     private Vec3d weightless$receiveIncreasedKnockback(Vec3d vector, double value, Operation<Vec3d> original) {
         if (ModConfig.increaseKnockback) {
@@ -178,14 +177,15 @@ public abstract class LivingEntityMixin extends Entity {
         }
         else {
             Vec3d vec3d = (d > 1.0 ? movementInput.normalize() : movementInput).multiply(speed);
-            float f = MathHelper.sin(yaw * (float) (Math.PI / 180.0));
-            float g = MathHelper.cos(yaw * (float) (Math.PI / 180.0));
-            float h = -MathHelper.sin(pitch * (float) (Math.PI / 180.0));
+            float vertical = (float) Math.sqrt(1.0f - Math.abs(pitch) / 90.0f);
+            float x = MathHelper.sin(yaw * (float) (Math.PI / 180.0)) * vertical;
+            float y = -MathHelper.sin(pitch * (float) (Math.PI / 180.0));
+            float z = MathHelper.cos(yaw * (float) (Math.PI / 180.0)) * vertical;
 
             return new Vec3d(
-                    vec3d.x * g - vec3d.z * f,
-                    (vec3d.z > 0 ? h : -h) * speed * (movementInput.z != 0 ? 1.1 : 0),
-                    vec3d.z * g + vec3d.x * f
+                    vec3d.x * z - vec3d.z * x,
+                    (vec3d.z > 0 ? y : -y) * speed * (movementInput.z != 0 ? 1.1 : 0),
+                    vec3d.z * z + vec3d.x * x
             );
         }
     }

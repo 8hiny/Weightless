@@ -24,7 +24,7 @@ public class WeightlessFlyingSoundInstance extends MovingSoundInstance {
         this.self = self;
         this.repeat = true;
         this.repeatDelay = 0;
-        this.volume = self ? 0.4f : 1.0f;
+        this.volume = self ? 0.25f : 1.0f;
         this.pitch = 0.8f;
     }
 
@@ -37,11 +37,11 @@ public class WeightlessFlyingSoundInstance extends MovingSoundInstance {
 
             float speed = (float) (self ? this.player.getVelocity().lengthSquared() : FlyingPlayerTracker.getVelocity(this.player).lengthSquared());
             if (speed >= 1.0E-7) {
-                this.volume = (self ? 0.4f : 1.0f) + MathHelper.clamp(speed / 4.0f, 0.0f, 1.0f);
+                this.volume = (self ? 0.25f : 1.0f) + MathHelper.clamp(speed / 4.0f, 0.0f, 1.0f);
                 this.pitch = 0.8f + MathHelper.clamp(speed / 4.0f, 0.0f, 1.0f);
             }
             else {
-                this.volume = self ? 0.4f : 1.0f;
+                this.volume = self ? 0.25f : 1.0f;
                 this.pitch = 0.8f;
             }
             this.lastAge = age;

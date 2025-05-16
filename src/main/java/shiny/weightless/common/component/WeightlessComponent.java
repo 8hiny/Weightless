@@ -17,15 +17,21 @@ import shiny.weightless.Weightless;
 import shiny.weightless.WeightlessClient;
 import shiny.weightless.client.trail.Trail;
 
+import java.awt.*;
+import java.util.ArrayList;
+
 public class WeightlessComponent implements AutoSyncedComponent, CommonTickingComponent {
 
     private final PlayerEntity provider;
-    private final Trail trail = new Trail(2);
+    private final Trail trail = new Trail(20);
     private int remainingStunTicks;
     private boolean enabled;
     private boolean flying;
     private boolean toggled = true;
     private boolean autopilot = false;
+    private int trailRed = 255;
+    private int trailGreen = 255;
+    private int trailBlue = 255;
 
     public WeightlessComponent(PlayerEntity provider) {
         this.provider = provider;
@@ -68,6 +74,23 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
                 ClientPlayNetworking.send(Weightless.AUTOPILOT_TOGGLE_C2S_PACKET, buf);
                 component.autopilot = autopilot;
             }
+
+            if (!client.isPaused()) {
+                int red = ModConfig.trailRed;
+                int green = ModConfig.trailGreen;
+                int blue = ModConfig.trailBlue;
+                if (component.trailRed != red || component.trailGreen != green || component.trailBlue != blue) {
+                    PacketByteBuf buf = PacketByteBufs.create();
+                    buf.writeInt(red);
+                    buf.writeInt(green);
+                    buf.writeInt(blue);
+                    ClientPlayNetworking.send(Weightless.UPDATE_TRAIL_COLOR_C2S_PACKET, buf);
+
+                    component.trailRed = red;
+                    component.trailGreen = green;
+                    component.trailBlue = blue;
+                }
+            }
         });
     }
 
@@ -79,7 +102,8 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     @Override
     public void clientTick() {
         tick();
-        Vec3d pos = new Vec3d(this.provider.getX(), this.provider.getBodyY(0.5), this.provider.getZ());
+
+        Vec3d pos = new Vec3d(this.provider.getX(), this.provider.getY() + 2.0, this.provider.getZ());
         this.trail.addPoint(pos);
         this.trail.tick();
     }
@@ -113,6 +137,9 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         this.autopilot = tag.getBoolean("Autopilot");
         this.flying = tag.getBoolean("Flying");
         this.remainingStunTicks = tag.getInt("StunTicks");
+        this.trailRed = tag.getInt("TrailRed");
+        this.trailGreen = tag.getInt("TrailGreen");
+        this.trailBlue = tag.getInt("TrailBlue");
     }
 
     @Override
@@ -122,6 +149,9 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         tag.putBoolean("Autopilot", this.autopilot);
         tag.putBoolean("Flying", this.flying);
         tag.putInt("StunTicks", this.remainingStunTicks);
+        tag.putInt("TrailRed", this.trailRed);
+        tag.putInt("TrailGreen", this.trailGreen);
+        tag.putInt("TrailBlue", this.trailBlue);
     }
 
     public boolean isStunned() {
@@ -156,6 +186,17 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
 
     public Trail getTrail() {
         return this.trail;
+    }
+
+    public void setTrailColor(int red, int green, int blue) {
+        Weightless.LOGGER.info("Updating color for player " + this.provider.getName().getString());
+        this.trailRed = red;
+        this.trailGreen = green;
+        this.trailBlue = blue;
+        sync();
+    }
+    public Color getTrailColor() {
+        return new Color(this.trailRed, this.trailGreen, this.trailBlue);
     }
 
     public static boolean canFly(PlayerEntity player) {

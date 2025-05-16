@@ -93,7 +93,7 @@ public class WeightlessClient implements ClientModInitializer {
             if (client.player != null) {
                 boolean bl = client.player.isSprinting() || autopilotActive;
                 flying = WeightlessComponent.flying(client.player) && bl;
-                flySpeed = (float) Math.min(client.player.getVelocity().horizontalLength(), 1.0f);
+                flySpeed = (float) Math.min(client.player.getVelocity().lengthSquared(), 1.0f);
             }
             if (client.world != null) {
                 worldTime = client.world.getTime();
