@@ -1,6 +1,5 @@
 package shiny.weightless.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -27,16 +26,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
 
     protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
         super(entityType, world);
-    }
-
-    @ModifyReturnValue(method = "getDimensions", at = @At(value = "RETURN"))
-    private EntityDimensions weightless$flyingDimensions(EntityDimensions original) {
-        PlayerEntity player = (PlayerEntity) (Object) this;
-
-        if (WeightlessComponent.flying(player) && (player.isSprinting() || WeightlessComponent.autopilot(player))) {
-            return EntityDimensions.changing(0.6f, 1.5f);
-        }
-        return original;
     }
 
     @Inject(method = "increaseTravelMotionStats", at = @At(value = "HEAD"))
