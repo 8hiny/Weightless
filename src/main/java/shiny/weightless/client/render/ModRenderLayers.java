@@ -15,7 +15,7 @@ public class ModRenderLayers extends RenderLayer {
             false, true,
             RenderLayer.MultiPhaseParameters.builder()
                     .program(RenderPhase.COLOR_PROGRAM)
-                    .transparency(TRANSLUCENT_TRANSPARENCY)
+                    .transparency(LIGHTNING_TRANSPARENCY)
                     .writeMaskState(COLOR_MASK)
                     .cull(DISABLE_CULLING)
                     .build(false)

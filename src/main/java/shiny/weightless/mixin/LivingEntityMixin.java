@@ -29,7 +29,6 @@ import shiny.weightless.common.component.WeightlessComponent;
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
 
-    @Unique private boolean wasSprinting = false;
     @Unique private boolean wasSprintFlying = false;
     @Unique private int startFlyingTicks = 0;
 
@@ -49,15 +48,6 @@ public abstract class LivingEntityMixin extends Entity {
             }
             else if (this.wasSprintFlying && (!bl || !WeightlessComponent.flying(player))) {
                 this.wasSprintFlying = false;
-            }
-
-            if (bl && !this.wasSprinting) {
-                this.calculateDimensions();
-                this.wasSprinting = true;
-            }
-            else if (!bl && this.wasSprinting) {
-                this.calculateDimensions();
-                this.wasSprinting = false;
             }
         }
     }
@@ -164,7 +154,7 @@ public abstract class LivingEntityMixin extends Entity {
         }
 
         if (ModConfig.increaseSpeedWhenHigh && entity.getPos().y >= ModConfig.altitude) {
-            speed *= 1.0f + ModConfig.highSpeedMultiplier;
+            speed *= ModConfig.highSpeedMultiplier;
         }
         return speed;
     }
