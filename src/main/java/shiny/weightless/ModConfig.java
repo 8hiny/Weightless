@@ -31,6 +31,7 @@ public class ModConfig extends MidnightConfig {
 
     //Client config options
     @Entry(category = CLIENT) public static boolean renderSpeedlines = true;
+    @Entry(category = CLIENT) public static boolean spawnFlyingParticles = true;
     @Entry(category = CLIENT) public static boolean renderTrail = true;
     @Entry(category = CLIENT, min = 0, max = 255) public static int trailRed = 255;
     @Entry(category = CLIENT, min = 0, max = 255) public static int trailGreen = 255;

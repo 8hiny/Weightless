@@ -24,6 +24,7 @@
   "weightless.midnightconfig.damageRequirement" : "The threshold any received damage must pass to stun a player mid-flight",
   "weightless.midnightconfig.stunDuration" : "The stun duration in ticks",
   "weightless.midnightconfig.renderSpeedlines" : "Whether sprinting while flying should display speed lines",
+  "weightless.midnightconfig.spawnFlyingParticles" : "Whether airborne players should spawn particles",
   "weightless.midnightconfig.renderTrail" : "Whether airborne players should display a speed trail",
   "weightless.midnightconfig.trailRed" : "The red value of your trail",
   "weightless.midnightconfig.trailGreen" : "The green value of your trail",

@@ -15,9 +15,12 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.DefaultParticleType;
+import net.minecraft.particle.ParticleType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.text.Text;
+import shiny.weightless.client.particle.ColorParticleEffect;
+import shiny.weightless.client.particle.PointParticle;
 import shiny.weightless.client.particle.ShockwaveParticle;
 import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
 import shiny.weightless.common.component.WeightlessComponent;
@@ -26,6 +29,11 @@ public class WeightlessClient implements ClientModInitializer {
 
     //Particles
     public static final DefaultParticleType SHOCKWAVE = Registry.register(Registries.PARTICLE_TYPE, Weightless.id("shockwave"), FabricParticleTypes.simple());
+    public static final ParticleType<ColorParticleEffect> POINT = Registry.register(
+            Registries.PARTICLE_TYPE,
+            Weightless.id("point"),
+            FabricParticleTypes.complex(true, ColorParticleEffect.PARAMETERS_FACTORY)
+    );
 
     //Speed lines shader & uniforms
     public static final ManagedShaderEffect SPEED_LINES = ShaderEffectManager.getInstance().manage(Weightless.id("shaders/post/speed_lines.json"));
@@ -49,6 +57,7 @@ public class WeightlessClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ParticleFactoryRegistry.getInstance().register(SHOCKWAVE, ShockwaveParticle.Factory::new);
+        ParticleFactoryRegistry.getInstance().register(POINT, PointParticle.Factory::new);
 
         ClientPlayNetworking.registerGlobalReceiver(Weightless.FLYING_SOUND_S2C_PACKET, (client, handler, buf, sender) -> {
             if (client.world != null && client.player != null) {

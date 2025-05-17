@@ -189,7 +189,6 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     }
 
     public void setTrailColor(int red, int green, int blue) {
-        Weightless.LOGGER.info("Updating color for player " + this.provider.getName().getString());
         this.trailRed = red;
         this.trailGreen = green;
         this.trailBlue = blue;

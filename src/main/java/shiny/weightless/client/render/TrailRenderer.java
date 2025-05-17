@@ -16,15 +16,14 @@ import java.util.List;
 public class TrailRenderer {
 
     /**
-     * Draws a triangular trail behind a player. The player must have a list of TrailPoints stored in their WeightlessComponent.
-     * @param player The player to attach the trail to
+     * Draws a triangular trail, usually behind an entity.
+     * @param trail The trail to be rendered
      * @param color The color which is interpolated to at the end of the trail
      * @param size The size of the trail
      * @param alpha The maximum opacity of the trail
      */
-    public static void render(MinecraftClient client, MatrixStack matrices, VertexConsumerProvider provider, PlayerEntity player, Color color, float size, int alpha) {
+    public static void render(MinecraftClient client, MatrixStack matrices, VertexConsumerProvider provider, Trail trail, Color color, float size, int alpha) {
         VertexConsumer vertexConsumer = provider.getBuffer(ModRenderLayers.getTrail());
-        Trail trail = WeightlessComponent.get(player).getTrail();
         List<TrailPoint> trailPoints = trail.getTrailPoints();
 
         Camera camera = client.gameRenderer.getCamera();
