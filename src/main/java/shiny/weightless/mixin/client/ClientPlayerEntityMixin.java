@@ -46,7 +46,7 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
     }
 
     @WrapOperation(method = "canStartSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingItem()Z"))
-    private boolean gildedglory$canStartSprintWithItem(ClientPlayerEntity player, Operation<Boolean> original) {
+    private boolean weightless$canStartSprintWithItem(ClientPlayerEntity player, Operation<Boolean> original) {
         return original.call(player) && (ModConfig.itemAffectSpeed || !WeightlessComponent.flying(player));
     }
 
