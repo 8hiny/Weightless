@@ -9,7 +9,7 @@ uniform float FlySpeed;
 in vec2 texCoord;
 out vec4 fragColor;
 
-//From Giorgi Azmaipharashvili (MIT liscenced): https://www.shadertoy.com/view/ctdfzN
+//From Giorgi Azmaipharashvili (MIT licenced): https://www.shadertoy.com/view/ctdfzN
 //Adapted to Minecraft by: Shiny (8hiny)
 
 // From David Hoskins (MIT licensed): https://www.shadertoy.com/view/4djSRW

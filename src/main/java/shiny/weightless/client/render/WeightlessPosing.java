@@ -79,8 +79,4 @@ public class WeightlessPosing {
         model.rightPants.copyTransform(model.rightLeg);
         model.jacket.copyTransform(model.body);
     }
-
-    public static void oscillate(ModelPart limb, float random, float last) {
-        //Use this to apply random motion to a modelpart, want to sorta mimic the oscillation from project jjk's first person animations
-    }
 }
