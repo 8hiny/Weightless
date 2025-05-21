@@ -1,7 +1,6 @@
 package shiny.weightless.client.render;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
@@ -29,7 +28,7 @@ public class WeightlessPosing {
         }
 
         boolean bl = player.isSprinting() || WeightlessComponent.autopilot(player);
-        Vec3d movement = WeightlessComponent.relativeMovement(velocity, player.getYaw(tickDelta), bl);
+        Vec3d movement = relativeMovement(velocity, player.getYaw(tickDelta), bl);
 
         double x = movement.x;
         double y = movement.y;
@@ -78,5 +77,29 @@ public class WeightlessPosing {
         model.leftPants.copyTransform(model.leftLeg);
         model.rightPants.copyTransform(model.rightLeg);
         model.jacket.copyTransform(model.body);
+    }
+
+    public static Vec3d relativeMovement(Vec3d velocity, float yaw, boolean sprinting) {
+        Vec3d movement = velocity.rotateY(yaw * (float) Math.PI / 180);
+        double x = movement.x;
+        double y = velocity.y;
+        double z = movement.z;
+
+        if (sprinting) {
+            x *= 1.1f;
+            z *= 1.25f;
+        }
+
+        double bound = Math.PI / 2.5;
+        if (y < 0.0f) {
+            x *= 1.0f - y;
+            z = MathHelper.lerp(y, z, -bound);
+        }
+
+        x = MathHelper.clamp(x, -bound, bound);
+        y = MathHelper.clamp(y, -bound, bound);
+        z = MathHelper.clamp(z, -bound, bound);
+
+        return new Vec3d(x, y, z);
     }
 }

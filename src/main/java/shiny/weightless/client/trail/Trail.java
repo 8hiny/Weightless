@@ -8,8 +8,8 @@ import java.util.List;
 public class Trail {
 
     public final int length;
-    private List<TrailPoint> trailPoints = new ArrayList<>();
-    private List<Vec3d> vertices = new ArrayList<>();
+    private final List<TrailPoint> trailPoints = new ArrayList<>();
+    private final List<Vec3d> vertices = new ArrayList<>();
 
     public Trail(int length) {
         this.length = length;

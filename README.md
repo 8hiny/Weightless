@@ -1,4 +1,4 @@
-# Weightless-1.20.1
+# Weightless-1.21.1
 
 ## Overview
 Weightless is a small fabric mod which adds a fun and polished flight mechanic. Players with weightless flight can freely move about in the air without any worry of impending fall damage.

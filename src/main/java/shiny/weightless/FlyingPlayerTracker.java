@@ -72,7 +72,7 @@ public class FlyingPlayerTracker {
                 boolean bl = WeightlessComponent.flying(player) && (player.isSprinting() || WeightlessComponent.autopilot(player));
                 if (!trackingSound(player) && bl) {
                     WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, player == client.player);
-                    startTrackingSound(client, player, sound);
+                    startTrackingSound(player, sound);
                 }
             }
         }
@@ -82,22 +82,21 @@ public class FlyingPlayerTracker {
         return trackedSounds.containsKey(player.getUuid());
     }
 
-    public static void startTrackingSound(MinecraftClient client, PlayerEntity source, WeightlessFlyingSoundInstance sound) {
+    public static void startTrackingSound(PlayerEntity source, WeightlessFlyingSoundInstance sound) {
         stopExistingSound(source);
         trackedSounds.putIfAbsent(source.getUuid(), sound);
-        client.getSoundManager().play(sound);
+        MinecraftClient.getInstance().getSoundManager().play(sound);
     }
 
     public static void stopExistingSound(PlayerEntity source) {
         UUID uuid = source.getUuid();
         if (trackedSounds.containsKey(uuid)) {
-            MinecraftClient client = MinecraftClient.getInstance();
-            client.getSoundManager().stop(trackedSounds.get(uuid));
-            remove(uuid);
+            MinecraftClient.getInstance().getSoundManager().stop(trackedSounds.get(uuid));
+            removeSound(uuid);
         }
     }
 
-    public static void remove(UUID uuid) {
+    public static void removeSound(UUID uuid) {
         trackedSounds.remove(uuid);
     }
 }

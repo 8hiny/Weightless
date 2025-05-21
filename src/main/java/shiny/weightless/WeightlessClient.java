@@ -1,38 +1,38 @@
 package shiny.weightless;
 
-import ladysnake.satin.api.event.ShaderEffectRenderCallback;
-import ladysnake.satin.api.managed.ManagedShaderEffect;
-import ladysnake.satin.api.managed.ShaderEffectManager;
-import ladysnake.satin.api.managed.uniform.Uniform1f;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.particle.ParticleType;
+import net.minecraft.particle.SimpleParticleType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.text.Text;
+import org.ladysnake.satin.api.event.ShaderEffectRenderCallback;
+import org.ladysnake.satin.api.managed.ManagedShaderEffect;
+import org.ladysnake.satin.api.managed.ShaderEffectManager;
+import org.ladysnake.satin.api.managed.uniform.Uniform1f;
 import shiny.weightless.client.particle.ColorParticleEffect;
 import shiny.weightless.client.particle.PointParticle;
 import shiny.weightless.client.particle.ShockwaveParticle;
-import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
 import shiny.weightless.common.component.WeightlessComponent;
+import shiny.weightless.common.network.CompareConfigMatchPayload;
+import shiny.weightless.common.network.FlyingSoundPayload;
 
 public class WeightlessClient implements ClientModInitializer {
 
     //Particles
-    public static final DefaultParticleType SHOCKWAVE = Registry.register(Registries.PARTICLE_TYPE, Weightless.id("shockwave"), FabricParticleTypes.simple());
+    public static final SimpleParticleType SHOCKWAVE = Registry.register(Registries.PARTICLE_TYPE, Weightless.id("shockwave"), FabricParticleTypes.simple());
     public static final ParticleType<ColorParticleEffect> POINT = Registry.register(
             Registries.PARTICLE_TYPE,
             Weightless.id("point"),
-            FabricParticleTypes.complex(true, ColorParticleEffect.PARAMETERS_FACTORY)
+            FabricParticleTypes.complex(ColorParticleEffect.CODEC, ColorParticleEffect.PACKET_CODEC)
     );
 
     //Speed lines shader & uniforms
@@ -59,23 +59,8 @@ public class WeightlessClient implements ClientModInitializer {
         ParticleFactoryRegistry.getInstance().register(SHOCKWAVE, ShockwaveParticle.Factory::new);
         ParticleFactoryRegistry.getInstance().register(POINT, PointParticle.Factory::new);
 
-        ClientPlayNetworking.registerGlobalReceiver(Weightless.FLYING_SOUND_S2C_PACKET, (client, handler, buf, sender) -> {
-            if (client.world != null && client.player != null) {
-                int id = buf.readVarInt();
-                Entity entity = client.world.getEntityById(id);
-
-                if (entity instanceof PlayerEntity player) {
-                    WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, player == client.player);
-                    FlyingPlayerTracker.startTrackingSound(client, player, sound);
-                }
-            }
-        });
-        ClientPlayNetworking.registerGlobalReceiver(Weightless.COMPARE_CONFIG_MATCH_S2C_PACKET, (client, handler, buf, sender) -> {
-            int encoded = buf.readVarInt();
-            if (encoded != ModConfig.encode()) {
-                handler.getConnection().disconnect(DISCONNECT_MESSAGE);
-            }
-        });
+        ClientPlayNetworking.registerGlobalReceiver(FlyingSoundPayload.ID, new FlyingSoundPayload.Handler());
+        ClientPlayNetworking.registerGlobalReceiver(CompareConfigMatchPayload.ID, new CompareConfigMatchPayload.Handler());
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             if (TOGGLE_WEIGHTLESS.isPressed() && !wasWeightlessPressed) {

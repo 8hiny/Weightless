@@ -3,12 +3,10 @@ package shiny.weightless.client.render;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import shiny.weightless.client.trail.Trail;
 import shiny.weightless.client.trail.TrailPoint;
-import shiny.weightless.common.component.WeightlessComponent;
 
 import java.awt.*;
 import java.util.List;
@@ -130,7 +128,6 @@ public class TrailRenderer {
     public static void vertex(MatrixStack matrices, VertexConsumer vertexConsumer, Vec3d pos, Color color, int alpha) {
         MatrixStack.Entry entry = matrices.peek();
         vertexConsumer.vertex(entry.getPositionMatrix(), (float) pos.x, (float) pos.y, (float) pos.z)
-                .color(color.getRed(), color.getGreen(), color.getBlue(), alpha)
-                .next();
+                .color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
     }
 }

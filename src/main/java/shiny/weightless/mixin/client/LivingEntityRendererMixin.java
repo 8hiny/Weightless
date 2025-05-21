@@ -9,10 +9,9 @@ import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.Vec3d;
-import org.joml.Vector3i;
+import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -31,7 +30,7 @@ public class LivingEntityRendererMixin<T extends LivingEntity, M extends EntityM
 
     @Shadow protected M model;
 
-    @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;setupTransforms(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/util/math/MatrixStack;FFF)V"))
+    @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;setupTransforms(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/util/math/MatrixStack;FFFF)V"))
     private void weightless$renderTrail(T entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
         if (entity instanceof AbstractClientPlayerEntity player && !player.isSneaking() && WeightlessComponent.flying(player) && ModConfig.renderTrail) {
             Vec3d velocity = player == MinecraftClient.getInstance().player ? player.lerpVelocity(tickDelta) : FlyingPlayerTracker.getLerpedVelocity(player, tickDelta);
@@ -46,7 +45,9 @@ public class LivingEntityRendererMixin<T extends LivingEntity, M extends EntityM
 
                 if (d > 0.02 && ModConfig.spawnFlyingParticles && Math.random() < (player.isSprinting() ? 0.02 : 0.01)) {
                     velocity = velocity.normalize().multiply(-0.25, 0.25, -0.25);
-                    MinecraftClient.getInstance().particleManager.addParticle(new ColorParticleEffect(new Vector3i(color.getRed(), color.getGreen(), color.getBlue())),
+
+                    Vector3f col = new Vector3f((float) color.getRed() / 255, (float) color.getGreen() / 255, (float) color.getBlue() / 255);
+                    MinecraftClient.getInstance().particleManager.addParticle(new ColorParticleEffect(col),
                             player.getParticleX(0.5),
                             player.getRandomBodyY(),
                             player.getParticleZ(0.5),
