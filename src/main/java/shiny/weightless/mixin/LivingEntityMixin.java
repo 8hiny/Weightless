@@ -2,13 +2,11 @@ package shiny.weightless.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -25,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import shiny.weightless.ModConfig;
 import shiny.weightless.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
+import shiny.weightless.common.network.FlyingSoundPayload;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
@@ -198,13 +197,12 @@ public abstract class LivingEntityMixin extends Entity {
     @Unique
     private static void sendSoundPackets(PlayerEntity source) {
         if (!source.getWorld().isClient()) {
-            PacketByteBuf buf = PacketByteBufs.create();
-            buf.writeVarInt(source.getId());
+            FlyingSoundPayload payload = new FlyingSoundPayload(source.getId());
 
             for (ServerPlayerEntity recipient : PlayerLookup.tracking(source)) {
-                ServerPlayNetworking.send(recipient, Weightless.FLYING_SOUND_S2C_PACKET, buf);
+                ServerPlayNetworking.send(recipient, payload);
             }
-            ServerPlayNetworking.send((ServerPlayerEntity) source, Weightless.FLYING_SOUND_S2C_PACKET, buf);
+            ServerPlayNetworking.send((ServerPlayerEntity) source, payload);
         }
     }
 }

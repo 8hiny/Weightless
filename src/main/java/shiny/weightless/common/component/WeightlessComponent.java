@@ -1,24 +1,24 @@
 package shiny.weightless.common.component;
 
-import dev.onyxstudios.cca.api.v3.component.sync.AutoSyncedComponent;
-import dev.onyxstudios.cca.api.v3.component.tick.CommonTickingComponent;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
+import org.ladysnake.cca.api.v3.component.sync.AutoSyncedComponent;
+import org.ladysnake.cca.api.v3.component.tick.CommonTickingComponent;
 import shiny.weightless.ModComponents;
 import shiny.weightless.ModConfig;
-import shiny.weightless.Weightless;
 import shiny.weightless.WeightlessClient;
 import shiny.weightless.client.trail.Trail;
+import shiny.weightless.common.network.ToggleAutopilotPayload;
+import shiny.weightless.common.network.ToggleWeightlessPayload;
+import shiny.weightless.common.network.UpdateTrailColorPayload;
 
 import java.awt.*;
-import java.util.ArrayList;
 
 public class WeightlessComponent implements AutoSyncedComponent, CommonTickingComponent {
 
@@ -57,43 +57,6 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         ModComponents.WEIGHTLESS.sync(this.provider);
     }
 
-    public static void clientTick(MinecraftClient client) {
-        ModComponents.WEIGHTLESS.maybeGet(client.player).ifPresent(component -> {
-            boolean toggled = WeightlessClient.weightlessActive;
-            boolean autopilot = WeightlessClient.autopilotActive;
-
-            if (component.toggled != toggled) {
-                PacketByteBuf buf = PacketByteBufs.create();
-                buf.writeBoolean(toggled);
-                ClientPlayNetworking.send(Weightless.WEIGHTLESS_TOGGLE_C2S_PACKET, buf);
-                component.toggled = toggled;
-            }
-            if (component.autopilot != autopilot) {
-                PacketByteBuf buf = PacketByteBufs.create();
-                buf.writeBoolean(autopilot);
-                ClientPlayNetworking.send(Weightless.AUTOPILOT_TOGGLE_C2S_PACKET, buf);
-                component.autopilot = autopilot;
-            }
-
-            if (!client.isPaused()) {
-                int red = ModConfig.trailRed;
-                int green = ModConfig.trailGreen;
-                int blue = ModConfig.trailBlue;
-                if (component.trailRed != red || component.trailGreen != green || component.trailBlue != blue) {
-                    PacketByteBuf buf = PacketByteBufs.create();
-                    buf.writeInt(red);
-                    buf.writeInt(green);
-                    buf.writeInt(blue);
-                    ClientPlayNetworking.send(Weightless.UPDATE_TRAIL_COLOR_C2S_PACKET, buf);
-
-                    component.trailRed = red;
-                    component.trailGreen = green;
-                    component.trailBlue = blue;
-                }
-            }
-        });
-    }
-
     @Override
     public void tick() {
         if (this.remainingStunTicks > 0) this.remainingStunTicks--;
@@ -108,8 +71,41 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         this.trail.tick();
     }
 
+    public static void clientTick(MinecraftClient client) {
+        ModComponents.WEIGHTLESS.maybeGet(client.player).ifPresent(component -> {
+            boolean toggled = WeightlessClient.weightlessActive;
+            boolean autopilot = WeightlessClient.autopilotActive;
+
+            if (component.toggled != toggled) {
+                ClientPlayNetworking.send(new ToggleWeightlessPayload());
+                component.toggled = toggled;
+            }
+            if (component.autopilot != autopilot) {
+                ClientPlayNetworking.send(new ToggleAutopilotPayload());
+                component.autopilot = autopilot;
+            }
+
+            if (!client.isPaused()) {
+                int red = ModConfig.trailRed;
+                int green = ModConfig.trailGreen;
+                int blue = ModConfig.trailBlue;
+
+                if (component.trailRed != red || component.trailGreen != green || component.trailBlue != blue) {
+                    ClientPlayNetworking.send(new UpdateTrailColorPayload(new Vector3f(red, green, blue)));
+                    component.trailRed = red;
+                    component.trailGreen = green;
+                    component.trailBlue = blue;
+                }
+            }
+        });
+    }
+
     public boolean autopilot() {
         return this.autopilot && this.provider.getHungerManager().getFoodLevel() > 6.0f && canFly(this.provider);
+    }
+
+    public boolean toggled() {
+        return this.toggled;
     }
 
     public boolean has() {
@@ -131,7 +127,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     }
 
     @Override
-    public void readFromNbt(NbtCompound tag) {
+    public void readFromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup wrapperLookup) {
         this.enabled = tag.getBoolean("Enabled");
         this.toggled = tag.getBoolean("Toggled");
         this.autopilot = tag.getBoolean("Autopilot");
@@ -143,7 +139,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     }
 
     @Override
-    public void writeToNbt(NbtCompound tag) {
+    public void writeToNbt(NbtCompound tag, RegistryWrapper.WrapperLookup wrapperLookup) {
         tag.putBoolean("Enabled", this.enabled);
         tag.putBoolean("Toggled", this.toggled);
         tag.putBoolean("Autopilot", this.autopilot);
@@ -152,6 +148,14 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         tag.putInt("TrailRed", this.trailRed);
         tag.putInt("TrailGreen", this.trailGreen);
         tag.putInt("TrailBlue", this.trailBlue);
+    }
+
+    public void setToggled(boolean toggled) {
+        this.toggled = toggled;
+    }
+
+    public void setAutopilot(boolean autopilot) {
+        this.autopilot = autopilot;
     }
 
     public boolean isStunned() {
@@ -174,16 +178,6 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         }
     }
 
-    public void setToggled(boolean toggled) {
-        this.toggled = toggled;
-        sync();
-    }
-
-    public void setAutopilot(boolean autopilot) {
-        this.autopilot = autopilot;
-        sync();
-    }
-
     public Trail getTrail() {
         return this.trail;
     }
@@ -194,6 +188,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         this.trailBlue = blue;
         sync();
     }
+
     public Color getTrailColor() {
         return new Color(this.trailRed, this.trailGreen, this.trailBlue);
     }
@@ -207,29 +202,5 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
                 && !player.isFallFlying()
                 && !player.isSleeping()
                 && !player.isClimbing();
-    }
-
-    public static Vec3d relativeMovement(Vec3d velocity, float yaw, boolean sprinting) {
-        Vec3d movement = velocity.rotateY(yaw * (float) Math.PI / 180);
-        double x = movement.x;
-        double y = velocity.y;
-        double z = movement.z;
-
-        if (sprinting) {
-            x *= 1.1f;
-            z *= 1.25f;
-        }
-
-        double bound = Math.PI / 2.5;
-        if (y < 0.0f) {
-            x *= 1.0f - y;
-            z = MathHelper.lerp(y, z, -bound);
-        }
-
-        x = MathHelper.clamp(x, -bound, bound);
-        y = MathHelper.clamp(y, -bound, bound);
-        z = MathHelper.clamp(z, -bound, bound);
-
-        return new Vec3d(x, y, z);
     }
 }

@@ -7,7 +7,6 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.MathHelper;
 import shiny.weightless.FlyingPlayerTracker;
-import shiny.weightless.ModConfig;
 import shiny.weightless.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
 
@@ -52,7 +51,7 @@ public class WeightlessFlyingSoundInstance extends MovingSoundInstance {
                 this.pitch = MathHelper.lerp(0.1f, this.pitch, 0.0f);
             }
             else {
-                FlyingPlayerTracker.remove(this.player.getUuid());
+                FlyingPlayerTracker.removeSound(this.player.getUuid());
                 this.setDone();
             }
         }
