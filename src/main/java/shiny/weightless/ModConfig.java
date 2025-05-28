@@ -61,4 +61,19 @@ public class ModConfig extends MidnightConfig {
                 + stunDuration;
         return encoded.hashCode();
     }
+
+    //Use the following enums to update settings
+
+    public static enum TrailType {
+        NONE,
+        RENDERER,
+        PARTICLE
+    }
+
+    public static enum StunType {
+        NONE,
+        PLAYER_ONLY,
+        MOB_ONLY,
+        ALL
+    }
 }

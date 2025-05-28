@@ -40,7 +40,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Weightle
                 }
 
                 float speed = (float) (dx * dx + dy * dy + dz * dz);
-                if (exhaustion > 0.0f && speed >  1.0E-7) {
+                if (exhaustion > 0.0f && speed >  1.0e-7) {
                     if (this.isSprinting() || WeightlessComponent.autopilot(player)) {
                         this.addExhaustion(0.04f * exhaustion);
                     }

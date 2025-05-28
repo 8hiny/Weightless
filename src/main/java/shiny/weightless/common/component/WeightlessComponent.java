@@ -18,7 +18,6 @@ import shiny.weightless.WeightlessClient;
 import shiny.weightless.client.trail.Trail;
 
 import java.awt.*;
-import java.util.ArrayList;
 
 public class WeightlessComponent implements AutoSyncedComponent, CommonTickingComponent {
 
@@ -91,21 +90,15 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
                     component.trailBlue = blue;
                 }
             }
+
+            component.trail.addLerpedPoint(component.provider, client.getTickDelta());
+            component.trail.tick();
         });
     }
 
     @Override
     public void tick() {
         if (this.remainingStunTicks > 0) this.remainingStunTicks--;
-    }
-
-    @Override
-    public void clientTick() {
-        tick();
-
-        Vec3d pos = new Vec3d(this.provider.getX(), this.provider.getY() + 2.0, this.provider.getZ());
-        this.trail.addPoint(pos);
-        this.trail.tick();
     }
 
     public boolean autopilot() {

@@ -1,20 +1,19 @@
 package shiny.weightless.client.render;
 
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderPhase;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 
 public class ModRenderLayers extends RenderLayer {
 
-    public static final RenderLayer TRAIL = RenderLayer.of(
+    private static final RenderLayer TRAIL = of(
             "weightless:trail",
             VertexFormats.POSITION_COLOR,
-            VertexFormat.DrawMode.TRIANGLES,
+            VertexFormat.DrawMode.QUADS,
             256,
             false, true,
-            RenderLayer.MultiPhaseParameters.builder()
-                    .program(RenderPhase.COLOR_PROGRAM)
+            MultiPhaseParameters.builder()
+                    .program(COLOR_PROGRAM)
                     .transparency(LIGHTNING_TRANSPARENCY)
                     .writeMaskState(COLOR_MASK)
                     .cull(DISABLE_CULLING)

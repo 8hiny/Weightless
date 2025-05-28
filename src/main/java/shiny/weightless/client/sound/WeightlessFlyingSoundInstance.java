@@ -7,7 +7,6 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.MathHelper;
 import shiny.weightless.FlyingPlayerTracker;
-import shiny.weightless.ModConfig;
 import shiny.weightless.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
 
@@ -36,7 +35,7 @@ public class WeightlessFlyingSoundInstance extends MovingSoundInstance {
             this.z = (float) this.player.getZ();
 
             float speed = (float) (self ? this.player.getVelocity().lengthSquared() : FlyingPlayerTracker.getVelocity(this.player).lengthSquared());
-            if (speed >= 1.0E-7) {
+            if (speed >= 1.0e-7) {
                 this.volume = (self ? 0.25f : 1.0f) + MathHelper.clamp(speed / 4.0f, 0.0f, 1.0f);
                 this.pitch = 0.8f + MathHelper.clamp(speed / 4.0f, 0.0f, 1.0f);
             }

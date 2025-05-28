@@ -9,9 +9,14 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.DefaultParticleType;
@@ -19,11 +24,17 @@ import net.minecraft.particle.ParticleType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec3d;
+import org.joml.Vector3i;
 import shiny.weightless.client.particle.ColorParticleEffect;
 import shiny.weightless.client.particle.PointParticle;
 import shiny.weightless.client.particle.ShockwaveParticle;
 import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
+import shiny.weightless.client.trail.Trail;
+import shiny.weightless.client.trail.TrailRenderer;
 import shiny.weightless.common.component.WeightlessComponent;
+
+import java.awt.*;
 
 public class WeightlessClient implements ClientModInitializer {
 
@@ -115,6 +126,45 @@ public class WeightlessClient implements ClientModInitializer {
                 WORLD_TIME.set(worldTime + tickDelta);
                 FLY_SPEED.set(flySpeed);
                 SPEED_LINES.render(tickDelta);
+            }
+        });
+
+        WorldRenderEvents.AFTER_TRANSLUCENT.register(ctx -> {
+            if (ModConfig.renderTrail) {
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client.world != null) {
+                    float tickDelta = client.getTickDelta();
+                    MatrixStack matrices = ctx.matrixStack();
+                    VertexConsumerProvider vertexConsumers = ctx.consumers();
+
+                    for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
+                        boolean bl = MinecraftClient.getInstance().options.getPerspective().isFirstPerson();
+                        if (player != MinecraftClient.getInstance().player || !bl) {
+                            if (!player.isSneaking() && WeightlessComponent.flying(player)) {
+                                Vec3d velocity = player == MinecraftClient.getInstance().player ? player.lerpVelocity(tickDelta) : FlyingPlayerTracker.getLerpedVelocity(player, tickDelta);
+                                double d = velocity.lengthSquared();
+                                if (d > 1.0e-7) {
+                                    Trail trail = WeightlessComponent.get(player).getTrail();
+                                    Color color = WeightlessComponent.get(player).getTrailColor();
+
+                                    float alpha = (float) Math.min(d + 0.2f, 1.0f);
+                                    float width = 0.8f + (float) d;
+                                    TrailRenderer.render(player, matrices, vertexConsumers, trail, width, alpha);
+
+                                    if (d > 0.02 && ModConfig.spawnFlyingParticles && Math.random() < (player.isSprinting() ? 0.02 : 0.01)) {
+                                        velocity = velocity.normalize().multiply(-0.25, 0.25, -0.25);
+                                        MinecraftClient.getInstance().particleManager.addParticle(new ColorParticleEffect(new Vector3i(color.getRed(), color.getGreen(), color.getBlue())),
+                                                player.getParticleX(0.5),
+                                                player.getRandomBodyY(),
+                                                player.getParticleZ(0.5),
+                                                velocity.x, velocity.y, velocity.z
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
     }

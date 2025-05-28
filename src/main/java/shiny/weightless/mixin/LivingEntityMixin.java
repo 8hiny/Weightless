@@ -162,7 +162,7 @@ public abstract class LivingEntityMixin extends Entity {
     @Unique
     private static Vec3d weightlessMovement(Vec3d movementInput, float speed, float pitch, float yaw) {
         double d = movementInput.lengthSquared();
-        if (d < 1.0E-7) {
+        if (d < 1.0e-7) {
             return Vec3d.ZERO;
         }
         else {

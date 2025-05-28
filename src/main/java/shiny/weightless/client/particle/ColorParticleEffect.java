@@ -5,11 +5,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleType;
-import net.minecraft.registry.Registries;
-import org.joml.Vector3f;
 import org.joml.Vector3i;
 import shiny.weightless.WeightlessClient;
-import shiny.weightless.common.component.WeightlessComponent;
 
 import java.util.Locale;
 
