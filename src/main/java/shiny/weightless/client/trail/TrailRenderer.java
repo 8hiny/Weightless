@@ -39,11 +39,9 @@ public class TrailRenderer {
             matrices.push();
             matrices.translate(-camPos.x, -camPos.y, -camPos.z);
 
-            Vec3d prevC = Vec3d.ZERO;
-            Vec3d prevD = Vec3d.ZERO;
-
             int count = points.size() - 1;
             float maxDistance = (float) points.get(0).getPos().squaredDistanceTo(points.get(count).getPos());
+            Vec3d[] prevVertices = new Vec3d[4];
             for (int i = 0; i < count; i++) {
                 Vec3d point = points.get(i).getPos();
                 Vec3d next = points.get(i + 1).getPos();
@@ -73,8 +71,8 @@ public class TrailRenderer {
                 }
 
                 if (i > 0) {
-                    vertex(matrices, vertexConsumer, prevC, color, alpha);
-                    vertex(matrices, vertexConsumer, prevD, color, alpha);
+                    vertex(matrices, vertexConsumer, prevVertices[2], color, alpha);
+                    vertex(matrices, vertexConsumer, prevVertices[3], color, alpha);
                 }
                 else {
                     vertex(matrices, vertexConsumer, vertices[0], color, alpha);
@@ -83,8 +81,7 @@ public class TrailRenderer {
                 vertex(matrices, vertexConsumer, vertices[3], color, nextAlpha);
                 vertex(matrices, vertexConsumer, vertices[2], color, nextAlpha);
 
-                prevC = vertices[2];
-                prevD = vertices[3];
+                prevVertices = vertices;
             }
             matrices.pop();
         }

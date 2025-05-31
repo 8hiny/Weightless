@@ -25,6 +25,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     private final Trail trail = new Trail(20);
     private int remainingStunTicks;
     private boolean enabled;
+    private boolean wasEnabled;
     private boolean flying;
     private boolean toggled = true;
     private boolean autopilot = false;
@@ -90,15 +91,20 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
                     component.trailBlue = blue;
                 }
             }
-
-            component.trail.addLerpedPoint(component.provider, client.getTickDelta());
-            component.trail.tick();
         });
     }
 
     @Override
     public void tick() {
         if (this.remainingStunTicks > 0) this.remainingStunTicks--;
+    }
+
+    @Override
+    public void clientTick() {
+        tick();
+
+        this.trail.addPoint(this.provider);
+        this.trail.tick();
     }
 
     public boolean autopilot() {
@@ -109,8 +115,13 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         return this.enabled;
     }
 
+    public boolean wasEnabled() {
+        return this.wasEnabled;
+    }
+
     public void attain() {
         this.enabled = true;
+        this.wasEnabled = true;
         sync();
     }
 
@@ -126,6 +137,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     @Override
     public void readFromNbt(NbtCompound tag) {
         this.enabled = tag.getBoolean("Enabled");
+        this.wasEnabled = tag.getBoolean("WasEnabled");
         this.toggled = tag.getBoolean("Toggled");
         this.autopilot = tag.getBoolean("Autopilot");
         this.flying = tag.getBoolean("Flying");
@@ -138,6 +150,7 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
     @Override
     public void writeToNbt(NbtCompound tag) {
         tag.putBoolean("Enabled", this.enabled);
+        tag.putBoolean("WasEnabled", this.wasEnabled);
         tag.putBoolean("Toggled", this.toggled);
         tag.putBoolean("Autopilot", this.autopilot);
         tag.putBoolean("Flying", this.flying);

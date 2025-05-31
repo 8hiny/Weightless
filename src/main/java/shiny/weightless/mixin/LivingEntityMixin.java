@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -130,11 +131,17 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "damage", at = @At(value = "HEAD"))
     private void weightless$stunOnDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
-        if (ModConfig.shouldStun && amount >= ModConfig.damageRequirement) {
-            LivingEntity entity = (LivingEntity) (Object) this;
-            if (entity instanceof PlayerEntity player && player.isAlive() && WeightlessComponent.flying(player)
-                    && (source.isIn(Weightless.CAN_STUN) || source.getAttacker() != null)) {
-                WeightlessComponent.get(player).setStunned();
+        if (ModConfig.stunType != ModConfig.StunType.NONE && amount >= ModConfig.damageRequirement) {
+            boolean bl = ModConfig.stunType == ModConfig.StunType.ALL
+                    || (ModConfig.stunType == ModConfig.StunType.PLAYER_ONLY && source.getAttacker() instanceof PlayerEntity)
+                    || (ModConfig.stunType == ModConfig.StunType.MOB_ONLY && source.getAttacker() instanceof MobEntity);
+
+            if (bl) {
+                LivingEntity entity = (LivingEntity) (Object) this;
+                if (entity instanceof PlayerEntity player && player.isAlive() && WeightlessComponent.flying(player)
+                        && (source.isIn(Weightless.CAN_STUN) || source.getAttacker() != null)) {
+                    WeightlessComponent.get(player).setStunned();
+                }
             }
         }
     }

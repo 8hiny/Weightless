@@ -29,6 +29,7 @@ import org.joml.Vector3i;
 import shiny.weightless.client.particle.ColorParticleEffect;
 import shiny.weightless.client.particle.PointParticle;
 import shiny.weightless.client.particle.ShockwaveParticle;
+import shiny.weightless.client.particle.TrailParticle;
 import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
 import shiny.weightless.client.trail.Trail;
 import shiny.weightless.client.trail.TrailRenderer;
@@ -43,6 +44,11 @@ public class WeightlessClient implements ClientModInitializer {
     public static final ParticleType<ColorParticleEffect> POINT = Registry.register(
             Registries.PARTICLE_TYPE,
             Weightless.id("point"),
+            FabricParticleTypes.complex(true, ColorParticleEffect.PARAMETERS_FACTORY)
+    );
+    public static final ParticleType<ColorParticleEffect> TRAIL_CLOUD = Registry.register(
+            Registries.PARTICLE_TYPE,
+            Weightless.id("trail_cloud"),
             FabricParticleTypes.complex(true, ColorParticleEffect.PARAMETERS_FACTORY)
     );
 
@@ -69,6 +75,7 @@ public class WeightlessClient implements ClientModInitializer {
     public void onInitializeClient() {
         ParticleFactoryRegistry.getInstance().register(SHOCKWAVE, ShockwaveParticle.Factory::new);
         ParticleFactoryRegistry.getInstance().register(POINT, PointParticle.Factory::new);
+        ParticleFactoryRegistry.getInstance().register(TRAIL_CLOUD, TrailParticle.Factory::new);
 
         ClientPlayNetworking.registerGlobalReceiver(Weightless.FLYING_SOUND_S2C_PACKET, (client, handler, buf, sender) -> {
             if (client.world != null && client.player != null) {
@@ -118,6 +125,46 @@ public class WeightlessClient implements ClientModInitializer {
             if (client.world != null) {
                 worldTime = client.world.getTime();
                 FlyingPlayerTracker.update(client);
+
+                if (!client.isPaused() && (ModConfig.spawnFlyingParticles || ModConfig.trailType == ModConfig.TrailType.PARTICLE)) {
+                    for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
+                        boolean bl = MinecraftClient.getInstance().options.getPerspective().isFirstPerson();
+
+                        if (player != MinecraftClient.getInstance().player || !bl) {
+                            float tickDelta = client.getTickDelta();
+                            Vec3d velocity = player == MinecraftClient.getInstance().player
+                                    ? player.lerpVelocity(tickDelta) : FlyingPlayerTracker.getLerpedVelocity(player, tickDelta);
+                            double d = velocity.lengthSquared();
+
+                            if (d > 0.01 && !player.isSneaking() && WeightlessComponent.flying(player)) {
+                                Color color = WeightlessComponent.get(player).getTrailColor();
+
+                                if (ModConfig.spawnFlyingParticles && client.world.getTime() % 5 == 0) {
+                                    velocity = velocity.normalize().multiply(-0.25, 0.25, -0.25);
+                                    client.particleManager.addParticle(new ColorParticleEffect(POINT, new Vector3i(color.getRed(), color.getGreen(), color.getBlue())),
+                                            player.getParticleX(0.5),
+                                            player.getRandomBodyY(),
+                                            player.getParticleZ(0.5),
+                                            velocity.x, velocity.y, velocity.z
+                                    );
+                                }
+
+                                if (ModConfig.trailType == ModConfig.TrailType.PARTICLE && (player.isSprinting() || client.world.getTime() % 2 == 0)) {
+                                    double e = player.getRandom().nextGaussian() * d * 0.025f;
+                                    double f = player.getRandom().nextGaussian() * d * 0.025f;
+                                    double g = player.getRandom().nextGaussian() * d * 0.025f;
+
+                                    client.particleManager.addParticle(new ColorParticleEffect(TRAIL_CLOUD, new Vector3i(color.getRed(), color.getGreen(), color.getBlue())),
+                                            player.getParticleX(0.5),
+                                            player.getBodyY(0.5),
+                                            player.getParticleZ(0.5),
+                                            e, f, g
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
 
@@ -130,36 +177,29 @@ public class WeightlessClient implements ClientModInitializer {
         });
 
         WorldRenderEvents.AFTER_TRANSLUCENT.register(ctx -> {
-            if (ModConfig.renderTrail) {
+            if (ModConfig.trailType == ModConfig.TrailType.RENDERER) {
                 MinecraftClient client = MinecraftClient.getInstance();
                 if (client.world != null) {
+
                     float tickDelta = client.getTickDelta();
                     MatrixStack matrices = ctx.matrixStack();
                     VertexConsumerProvider vertexConsumers = ctx.consumers();
 
                     for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
                         boolean bl = MinecraftClient.getInstance().options.getPerspective().isFirstPerson();
+
                         if (player != MinecraftClient.getInstance().player || !bl) {
                             if (!player.isSneaking() && WeightlessComponent.flying(player)) {
-                                Vec3d velocity = player == MinecraftClient.getInstance().player ? player.lerpVelocity(tickDelta) : FlyingPlayerTracker.getLerpedVelocity(player, tickDelta);
+
+                                Vec3d velocity = player == MinecraftClient.getInstance().player
+                                        ? player.lerpVelocity(tickDelta) : FlyingPlayerTracker.getLerpedVelocity(player, tickDelta);
                                 double d = velocity.lengthSquared();
+
                                 if (d > 1.0e-7) {
                                     Trail trail = WeightlessComponent.get(player).getTrail();
-                                    Color color = WeightlessComponent.get(player).getTrailColor();
-
                                     float alpha = (float) Math.min(d + 0.2f, 1.0f);
                                     float width = 0.8f + (float) d;
                                     TrailRenderer.render(player, matrices, vertexConsumers, trail, width, alpha);
-
-                                    if (d > 0.02 && ModConfig.spawnFlyingParticles && Math.random() < (player.isSprinting() ? 0.02 : 0.01)) {
-                                        velocity = velocity.normalize().multiply(-0.25, 0.25, -0.25);
-                                        MinecraftClient.getInstance().particleManager.addParticle(new ColorParticleEffect(new Vector3i(color.getRed(), color.getGreen(), color.getBlue())),
-                                                player.getParticleX(0.5),
-                                                player.getRandomBodyY(),
-                                                player.getParticleZ(0.5),
-                                                velocity.x, velocity.y, velocity.z
-                                        );
-                                    }
                                 }
                             }
                         }

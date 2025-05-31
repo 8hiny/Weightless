@@ -3,6 +3,7 @@ package shiny.weightless.client.particle;
 import net.minecraft.client.particle.*;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.MathHelper;
+import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 public class PointParticle extends SpriteBillboardParticle {
@@ -20,10 +21,10 @@ public class PointParticle extends SpriteBillboardParticle {
         this.velocityY = velocityY;
         this.velocityZ = velocityZ;
 
-        Vector3i color = parameters.getColor();
-        this.red = (float) color.x / 255;
-        this.green = (float) color.y / 255;
-        this.blue = (float) color.z / 255;
+        Vector3f color = parameters.getColor();
+        this.red = color.x;
+        this.green = color.y;
+        this.blue = color.z;
         this.alpha = this.random.nextBetweenExclusive(5, 10) * 0.1f;
 
         this.maxAge = 30 + this.random.nextInt(20);

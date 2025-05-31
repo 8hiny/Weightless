@@ -65,6 +65,9 @@ public class Weightless implements ModInitializer {
 			PacketByteBuf buf = PacketByteBufs.create();
 			buf.writeVarInt(ModConfig.encode());
 			ServerPlayNetworking.send(handler.getPlayer(), COMPARE_CONFIG_MATCH_S2C_PACKET, buf);
+
+			WeightlessComponent component = WeightlessComponent.get(handler.player);
+			if (ModConfig.allPlayersWeightless && !component.wasEnabled()) component.attain();
 		});
 
 		ServerTickEvents.END_SERVER_TICK.register(server -> {

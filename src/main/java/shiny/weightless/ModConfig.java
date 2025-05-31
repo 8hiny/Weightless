@@ -22,11 +22,12 @@ public class ModConfig extends MidnightConfig {
     @Entry public static boolean itemAffectSpeed = true;
 
     @Comment(centered = true) public static Comment stun;
-    @Entry public static boolean shouldStun = true;
+    @Entry public static StunType stunType = StunType.ALL;
     @Entry(min = 0.0f) public static float damageRequirement = 8.0f;
     @Entry(min = 0) public static int stunDuration = 80;
 
     @Comment(centered = true) public static Comment misc;
+    @Entry public static boolean allPlayersWeightless = false;
     @Entry public static int altitude = 196;
     @Entry public static boolean preventRangedWeapons = true;
     @Entry public static boolean increaseKnockback = true;
@@ -35,7 +36,7 @@ public class ModConfig extends MidnightConfig {
     //Client config options
     @Entry(category = CLIENT) public static boolean renderSpeedlines = true;
     @Entry(category = CLIENT) public static boolean spawnFlyingParticles = true;
-    @Entry(category = CLIENT) public static boolean renderTrail = true;
+    @Entry(category = CLIENT) public static TrailType trailType = TrailType.RENDERER;
     @Entry(category = CLIENT, min = 0, max = 255) public static int trailRed = 255;
     @Entry(category = CLIENT, min = 0, max = 255) public static int trailGreen = 255;
     @Entry(category = CLIENT, min = 0, max = 255) public static int trailBlue = 255;
@@ -43,6 +44,7 @@ public class ModConfig extends MidnightConfig {
     public static int encode() {
         String encoded = ""
                 + altitude
+                + allPlayersWeightless
                 + exhaust
                 + hungerMultiplier
                 + reduceHungerWhenHigh
@@ -56,21 +58,19 @@ public class ModConfig extends MidnightConfig {
                 + preventRangedWeapons
                 + increaseKnockback
                 + knockbackMultiplier
-                + shouldStun
+                + stunType
                 + damageRequirement
                 + stunDuration;
         return encoded.hashCode();
     }
 
-    //Use the following enums to update settings
-
-    public static enum TrailType {
+    public enum TrailType {
         NONE,
         RENDERER,
         PARTICLE
     }
 
-    public static enum StunType {
+    public enum StunType {
         NONE,
         PLAYER_ONLY,
         MOB_ONLY,
