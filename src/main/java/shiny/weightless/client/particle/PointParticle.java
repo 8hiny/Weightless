@@ -4,7 +4,6 @@ import net.minecraft.client.particle.*;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.MathHelper;
 import org.joml.Vector3f;
-import org.joml.Vector3i;
 
 public class PointParticle extends SpriteBillboardParticle {
 
