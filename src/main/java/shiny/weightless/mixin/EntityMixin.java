@@ -1,10 +1,11 @@
 package shiny.weightless.mixin;
 
-import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.BlockPos;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import shiny.weightless.common.component.WeightlessComponent;
@@ -12,8 +13,8 @@ import shiny.weightless.common.component.WeightlessComponent;
 @Mixin(Entity.class)
 public abstract class EntityMixin {
 
-    @WrapWithCondition(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;fall(DZLnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;)V"))
-    private boolean weightless$preventFall(Entity entity, double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
-        return !(entity instanceof PlayerEntity player && WeightlessComponent.flying(player));
+    @WrapOperation(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;checkFallDamage(DZLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V"))
+    private void weightless$preventFall(Entity entity, double d, boolean onGround, BlockState blockState, BlockPos blockPos, Operation<Void> original) {
+        original.call(entity, d, onGround && (!(entity instanceof Player player) || !WeightlessComponent.flying(player)), blockState, blockPos);
     }
 }

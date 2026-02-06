@@ -1,50 +1,55 @@
 package shiny.weightless.common.command;
 
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.world.entity.player.Player;
 import shiny.weightless.common.component.WeightlessComponent;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
 
 public class WeightlessCommand {
 
-    public static void init() {
+    public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, commandRegistryAccess, registrationEnvironment) -> {
-            dispatcher.register(literal("weightless")
-                    .requires(source -> source.hasPermissionLevel(2))
-                    .then(argument("player", EntityArgumentType.player())
-                            .then(argument("operation", StringArgumentType.string())
-                                    .suggests((ctx, builder) -> CommandSource.suggestMatching(addOrRevoke(), builder))
-                                    .executes(ctx -> {
-                                        boolean bl = StringArgumentType.getString(ctx, "operation").equals("grant");
-                                        return execute(EntityArgumentType.getPlayer(ctx, "player"), bl);
-                                    })
+            dispatcher.register(Commands.literal("weightless")
+                    .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_MODERATOR))
+                    .then(Commands.argument("player", EntityArgument.players())
+                            .executes(context -> query(context, EntityArgument.getPlayer(context, "player")))
+                            .then(Commands.literal("grant")
+                                    .executes(context -> execute(EntityArgument.getPlayer(context, "player"), true))
+                            )
+                            .then(Commands.literal("revoke")
+                                    .executes(context -> execute(EntityArgument.getPlayer(context, "player"), false))
                             )
                     )
             );
         });
     }
 
-    public static int execute(ServerPlayerEntity player, boolean add) {
+    private static int query(CommandContext<CommandSourceStack> context, Player player) {
         if (player != null) {
-            if (add) WeightlessComponent.get(player).attain();
-            else WeightlessComponent.get(player).reset();
-            return 1;
+            boolean bl = WeightlessComponent.has(player);
+            if (bl) {
+                context.getSource().sendSuccess(() -> Component.translatable("commands.weightless.query.has", player.getName()), bl);
+                return 1;
+            }
+            else {
+                context.getSource().sendSuccess(() -> Component.translatable("commands.weightless.query.has_not", player.getName()), bl);
+            }
+
         }
         return 0;
     }
 
-    private static List<String> addOrRevoke() {
-        List<String> strings = new ArrayList<>();
-        strings.add("grant");
-        strings.add("revoke");
-        return strings;
+    private static int execute(Player player, boolean grant) {
+        if (player != null) {
+            if (grant) WeightlessComponent.get(player).attain();
+            else WeightlessComponent.get(player).reset();
+            return 1;
+        }
+        return 0;
     }
 }

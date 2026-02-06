@@ -1,77 +1,57 @@
 package shiny.weightless.common.component;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3f;
 import org.ladysnake.cca.api.v3.component.sync.AutoSyncedComponent;
-import org.ladysnake.cca.api.v3.component.tick.CommonTickingComponent;
-import shiny.weightless.ModComponents;
-import shiny.weightless.ModConfig;
-import shiny.weightless.WeightlessClient;
-import shiny.weightless.client.trail.Trail;
+import org.ladysnake.cca.api.v3.component.tick.ServerTickingComponent;
+import shiny.weightless.client.WeightlessClient;
+import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.network.ToggleAutopilotPayload;
 import shiny.weightless.common.network.ToggleWeightlessPayload;
-import shiny.weightless.common.network.UpdateTrailColorPayload;
+import shiny.weightless.common.util.WeightlessUtil;
 
-import java.awt.*;
+public class WeightlessComponent implements AutoSyncedComponent, ServerTickingComponent {
 
-public class WeightlessComponent implements AutoSyncedComponent, CommonTickingComponent {
-
-    private final PlayerEntity provider;
-    private final Trail trail = new Trail(20);
-    private int remainingStunTicks;
+    private final Player provider;
     private boolean enabled;
+    private boolean wasEnabled;
     private boolean flying;
     private boolean toggled = true;
     private boolean autopilot = false;
-    private int trailRed = 255;
-    private int trailGreen = 255;
-    private int trailBlue = 255;
+    private int flightTicks;
+    private int remainingStunTicks;
 
-    public WeightlessComponent(PlayerEntity provider) {
+    public WeightlessComponent(Player provider) {
         this.provider = provider;
     }
 
-    public static WeightlessComponent get(@NotNull PlayerEntity player) {
+    public static WeightlessComponent get(@NotNull Player player) {
         return ModComponents.WEIGHTLESS.get(player);
     }
 
-    public static boolean has(@NotNull PlayerEntity player) {
+    public static boolean has(@NotNull Player player) {
         return ModComponents.WEIGHTLESS.get(player).has();
     }
 
-    public static boolean flying(@NotNull PlayerEntity player) {
+    public static boolean flying(@NotNull Player player) {
         return ModComponents.WEIGHTLESS.get(player).flying();
     }
 
-    public static boolean autopilot(@NotNull PlayerEntity player) {
-        return ModComponents.WEIGHTLESS.get(player).autopilot();
+    public static boolean inAutopilot(@NotNull Player player) {
+        return ModComponents.WEIGHTLESS.get(player).inAutopilot();
     }
 
-    public void sync() {
-        ModComponents.WEIGHTLESS.sync(this.provider);
+    public void sync(boolean simplified) {
+        ModComponents.WEIGHTLESS.sync(this.provider, (buf, recipient) -> this.writeSyncPacket(buf, recipient, simplified));
     }
 
-    @Override
-    public void tick() {
-        if (this.remainingStunTicks > 0) this.remainingStunTicks--;
-    }
-
-    @Override
-    public void clientTick() {
-        tick();
-
-        Vec3d pos = new Vec3d(this.provider.getX(), this.provider.getY() + 2.0, this.provider.getZ());
-        this.trail.addPoint(pos);
-        this.trail.tick();
-    }
-
-    public static void clientTick(MinecraftClient client) {
+    public static void clientTick(Minecraft client) {
         ModComponents.WEIGHTLESS.maybeGet(client.player).ifPresent(component -> {
             boolean toggled = WeightlessClient.weightlessActive;
             boolean autopilot = WeightlessClient.autopilotActive;
@@ -84,37 +64,41 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
                 ClientPlayNetworking.send(new ToggleAutopilotPayload());
                 component.autopilot = autopilot;
             }
-
-            if (!client.isPaused()) {
-                int red = ModConfig.trailRed;
-                int green = ModConfig.trailGreen;
-                int blue = ModConfig.trailBlue;
-
-                if (component.trailRed != red || component.trailGreen != green || component.trailBlue != blue) {
-                    ClientPlayNetworking.send(new UpdateTrailColorPayload(new Vector3f(red, green, blue)));
-                    component.trailRed = red;
-                    component.trailGreen = green;
-                    component.trailBlue = blue;
-                }
-            }
         });
     }
 
-    public boolean autopilot() {
-        return this.autopilot && this.provider.getHungerManager().getFoodLevel() > 6.0f && canFly(this.provider);
-    }
+    @Override
+    public void serverTick() {
+        boolean sync = false;
+        if (this.remainingStunTicks > 0) {
+            this.remainingStunTicks--;
+            sync = true;
+        }
 
-    public boolean toggled() {
-        return this.toggled;
+        if (this.flying) {
+            this.flightTicks++;
+            sync = true;
+        }
+        else if (this.flightTicks > 0) {
+            this.flightTicks = 0;
+            sync = true;
+        }
+
+        if (sync) this.sync(true);
     }
 
     public boolean has() {
         return this.enabled;
     }
 
+    public boolean wasEnabled() {
+        return this.wasEnabled;
+    }
+
     public void attain() {
         this.enabled = true;
-        sync();
+        this.wasEnabled = true;
+        sync(false);
     }
 
     public void reset() {
@@ -123,39 +107,74 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
         this.autopilot = false;
         this.flying = false;
         this.remainingStunTicks = 0;
-        sync();
+        sync(false);
     }
 
     @Override
-    public void readFromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup wrapperLookup) {
-        this.enabled = tag.getBoolean("Enabled");
-        this.toggled = tag.getBoolean("Toggled");
-        this.autopilot = tag.getBoolean("Autopilot");
-        this.flying = tag.getBoolean("Flying");
-        this.remainingStunTicks = tag.getInt("StunTicks");
-        this.trailRed = tag.getInt("TrailRed");
-        this.trailGreen = tag.getInt("TrailGreen");
-        this.trailBlue = tag.getInt("TrailBlue");
+    public void readData(ValueInput readView) {
+        this.enabled = readView.getBooleanOr("Enabled", false);
+        this.wasEnabled = readView.getBooleanOr("WasEnabled", false);
+        this.toggled = readView.getBooleanOr("Toggled", false);
+        this.autopilot = readView.getBooleanOr("Autopilot", false);
+        this.flying = readView.getBooleanOr("Flying", false);
+        this.remainingStunTicks = readView.getIntOr("StunTicks", 0);
+        this.flightTicks = readView.getIntOr("FlightTicks", 0);
     }
 
     @Override
-    public void writeToNbt(NbtCompound tag, RegistryWrapper.WrapperLookup wrapperLookup) {
-        tag.putBoolean("Enabled", this.enabled);
-        tag.putBoolean("Toggled", this.toggled);
-        tag.putBoolean("Autopilot", this.autopilot);
-        tag.putBoolean("Flying", this.flying);
-        tag.putInt("StunTicks", this.remainingStunTicks);
-        tag.putInt("TrailRed", this.trailRed);
-        tag.putInt("TrailGreen", this.trailGreen);
-        tag.putInt("TrailBlue", this.trailBlue);
+    public void writeData(ValueOutput writeView) {
+        writeView.putBoolean("Enabled", this.enabled);
+        writeView.putBoolean("WasEnabled", this.wasEnabled);
+        writeView.putBoolean("Toggled", this.toggled);
+        writeView.putBoolean("Autopilot", this.autopilot);
+        writeView.putBoolean("Flying", this.flying);
+        writeView.putInt("StunTicks", this.remainingStunTicks);
+        writeView.putInt("FlightTicks", this.flightTicks);
     }
 
-    public void setToggled(boolean toggled) {
-        this.toggled = toggled;
+    @Override
+    public void applySyncPacket(RegistryFriendlyByteBuf buf) {
+        if (buf.readBoolean()) {
+            this.remainingStunTicks = buf.readInt();
+            this.flightTicks = buf.readInt();
+        }
+        else {
+            AutoSyncedComponent.super.applySyncPacket(buf);
+        }
+    }
+
+    @Override
+    public void writeSyncPacket(RegistryFriendlyByteBuf buf, ServerPlayer recipient) {
+        this.writeSyncPacket(buf, recipient, false);
+    }
+
+    private void writeSyncPacket(RegistryFriendlyByteBuf buf, ServerPlayer recipient, boolean simplified) {
+        buf.writeBoolean(simplified);
+        if (simplified) {
+            buf.writeInt(this.remainingStunTicks);
+            buf.writeInt(this.flightTicks);
+        }
+        else {
+            AutoSyncedComponent.super.writeSyncPacket(buf, recipient);
+        }
+    }
+
+    public boolean isToggled() {
+        return this.toggled;
+    }
+
+    public void toggle() {
+        this.toggled = !this.toggled;
+        this.sync(false);
+    }
+
+    public boolean inAutopilot() {
+        return this.autopilot && this.provider.getFoodData().getFoodLevel() > 6.0f && WeightlessUtil.canFly(this.provider);
     }
 
     public void setAutopilot(boolean autopilot) {
         this.autopilot = autopilot;
+        this.sync(false);
     }
 
     public boolean isStunned() {
@@ -164,43 +183,21 @@ public class WeightlessComponent implements AutoSyncedComponent, CommonTickingCo
 
     public void setStunned() {
         this.remainingStunTicks = ModConfig.stunDuration;
-        sync();
+        this.sync(false);
     }
 
     public boolean flying() {
-        return this.has() && this.toggled && this.flying && canFly(this.provider);
+        return this.has() && this.toggled && this.flying && WeightlessUtil.canFly(this.provider);
     }
 
     public void setFlying(boolean flying) {
         if (flying != this.flying) {
             this.flying = flying;
-            sync();
+            this.sync(false);
         }
     }
 
-    public Trail getTrail() {
-        return this.trail;
-    }
-
-    public void setTrailColor(int red, int green, int blue) {
-        this.trailRed = red;
-        this.trailGreen = green;
-        this.trailBlue = blue;
-        sync();
-    }
-
-    public Color getTrailColor() {
-        return new Color(this.trailRed, this.trailGreen, this.trailBlue);
-    }
-
-    public static boolean canFly(PlayerEntity player) {
-        return player.isPartOfGame()
-                && !player.isCreative()
-                && !player.hasVehicle()
-                && !player.isInSwimmingPose()
-                && !player.isUsingRiptide()
-                && !player.isFallFlying()
-                && !player.isSleeping()
-                && !player.isClimbing();
+    public int getFlightTicks() {
+        return this.flightTicks;
     }
 }

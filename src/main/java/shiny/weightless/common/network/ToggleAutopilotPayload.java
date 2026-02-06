@@ -1,28 +1,32 @@
 package shiny.weightless.common.network;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import shiny.weightless.Weightless;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.player.Player;
+import shiny.weightless.common.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
+import shiny.weightless.common.util.WeightlessUtil;
 
-public record ToggleAutopilotPayload() implements CustomPayload {
+public record ToggleAutopilotPayload() implements CustomPacketPayload {
 
-    public static final Id<ToggleAutopilotPayload> ID = new Id<>(Weightless.id("toggle_autopilot"));
-    public static final PacketCodec<PacketByteBuf, ToggleAutopilotPayload> CODEC = PacketCodec.unit(new ToggleAutopilotPayload());
+    public static final CustomPacketPayload.Type<ToggleAutopilotPayload> TYPE = new CustomPacketPayload.Type<>(Weightless.id("toggle_autopilot"));
+    public static final StreamCodec<FriendlyByteBuf, ToggleAutopilotPayload> CODEC = StreamCodec.unit(new ToggleAutopilotPayload());
 
     @Override
-    public Id<? extends CustomPayload> getId() {
-        return ID;
+    public Type<ToggleAutopilotPayload> type() {
+        return TYPE;
     }
 
     public static class Handler implements ServerPlayNetworking.PlayPayloadHandler<ToggleAutopilotPayload> {
         @Override
         public void receive(ToggleAutopilotPayload payload, ServerPlayNetworking.Context context) {
-            PlayerEntity player = context.player();
-            boolean bl = WeightlessComponent.get(player).autopilot();
+            Player player = context.player();
+            boolean bl = WeightlessComponent.inAutopilot(player);
+            if (bl) {
+                WeightlessUtil.sendFlightSoundPackets(player);
+            }
             WeightlessComponent.get(player).setAutopilot(!bl);
         }
     }

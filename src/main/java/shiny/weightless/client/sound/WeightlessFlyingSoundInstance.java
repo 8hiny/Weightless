@@ -1,43 +1,43 @@
 package shiny.weightless.client.sound;
 
-import net.minecraft.client.sound.MovingSoundInstance;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.MathHelper;
-import shiny.weightless.FlyingPlayerTracker;
-import shiny.weightless.Weightless;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import shiny.weightless.common.util.FlyingPlayerTracker;
+import shiny.weightless.common.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
 
-public class WeightlessFlyingSoundInstance extends MovingSoundInstance {
+public class WeightlessFlyingSoundInstance extends AbstractTickableSoundInstance {
 
-    private final PlayerEntity player;
+    private final Player player;
     private final boolean self;
     private int lastAge;
     private int age;
 
-    public WeightlessFlyingSoundInstance(PlayerEntity player, boolean self) {
-        super(self ? SoundEvents.ITEM_ELYTRA_FLYING : Weightless.OTHER_WEIGHTLESS_FLYING, SoundCategory.PLAYERS, SoundInstance.createRandom());
+    public WeightlessFlyingSoundInstance(Player player, boolean self) {
+        super(self ? SoundEvents.ELYTRA_FLYING : Weightless.OTHER_WEIGHTLESS_FLYING, SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
         this.player = player;
         this.self = self;
-        this.repeat = true;
-        this.repeatDelay = 0;
+        this.looping = true;
+        this.delay = 0;
         this.volume = self ? 0.25f : 1.0f;
         this.pitch = 0.8f;
     }
 
     @Override
     public void tick() {
-        if (!this.player.isRemoved() && WeightlessComponent.flying(this.player) && (this.player.isSprinting() || WeightlessComponent.autopilot(this.player))) {
+        if (!this.player.isRemoved() && WeightlessComponent.flying(this.player) && (this.player.isSprinting() || WeightlessComponent.inAutopilot(this.player))) {
             this.x = (float) this.player.getX();
             this.y = (float) this.player.getY();
             this.z = (float) this.player.getZ();
 
-            float speed = (float) (self ? this.player.getVelocity().lengthSquared() : FlyingPlayerTracker.getVelocity(this.player).lengthSquared());
-            if (speed >= 1.0E-7) {
-                this.volume = (self ? 0.25f : 1.0f) + MathHelper.clamp(speed / 4.0f, 0.0f, 1.0f);
-                this.pitch = 0.8f + MathHelper.clamp(speed / 4.0f, 0.0f, 1.0f);
+            float speed = (float) (self ? this.player.getDeltaMovement().lengthSqr() : FlyingPlayerTracker.getVelocity(this.player.getUUID()).lengthSqr());
+            if (speed >= 1.0e-7) {
+                this.volume = (self ? 0.25f : 1.0f) + Mth.clamp(speed / 4.0f, 0.0f, 1.0f);
+                this.pitch = 0.8f + Mth.clamp(speed / 4.0f, 0.0f, 1.0f);
             }
             else {
                 this.volume = self ? 0.25f : 1.0f;
@@ -47,14 +47,19 @@ public class WeightlessFlyingSoundInstance extends MovingSoundInstance {
         }
         else if (this.age > 0) {
             if (this.age - this.lastAge < 10) {
-                this.volume = MathHelper.lerp(0.1f, this.volume, 0.0f);
-                this.pitch = MathHelper.lerp(0.1f, this.pitch, 0.0f);
+                this.volume = Mth.lerp(0.1f, this.volume, 0.0f);
+                this.pitch = Mth.lerp(0.1f, this.pitch, 0.0f);
             }
             else {
-                FlyingPlayerTracker.removeSound(this.player.getUuid());
-                this.setDone();
+                FlyingPlayerTracker.removeSound(this.player.getUUID());
+                this.stop();
             }
         }
         this.age++;
+    }
+
+    @Override
+    public boolean canStartSilent() {
+        return true;
     }
 }

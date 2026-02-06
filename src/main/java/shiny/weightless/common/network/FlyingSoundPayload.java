@@ -1,34 +1,31 @@
 package shiny.weightless.common.network;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import shiny.weightless.FlyingPlayerTracker;
-import shiny.weightless.Weightless;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
+import shiny.weightless.common.util.FlyingPlayerTracker;
+import shiny.weightless.common.Weightless;
 
-public record FlyingSoundPayload(int entityId) implements CustomPayload {
+public record FlyingSoundPayload(int entityId) implements CustomPacketPayload {
 
-    public static final CustomPayload.Id<FlyingSoundPayload> ID = new Id<>(Weightless.id("flying_sound"));
-    public static final PacketCodec<PacketByteBuf, FlyingSoundPayload> CODEC = PacketCodec.tuple(PacketCodecs.VAR_INT, FlyingSoundPayload::entityId, FlyingSoundPayload::new);
+    public static final CustomPacketPayload.Type<FlyingSoundPayload> TYPE = new CustomPacketPayload.Type<>(Weightless.id("flying_sound"));
+    public static final StreamCodec<FriendlyByteBuf, FlyingSoundPayload> CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, FlyingSoundPayload::entityId, FlyingSoundPayload::new);
 
     @Override
-    public Id<? extends CustomPayload> getId() {
-        return ID;
+    public Type<FlyingSoundPayload> type() {
+        return TYPE;
     }
 
     public static class Handler implements ClientPlayNetworking.PlayPayloadHandler<FlyingSoundPayload> {
         @Override
         public void receive(FlyingSoundPayload payload, ClientPlayNetworking.Context context) {
-            Entity entity = context.player().getWorld().getEntityById(payload.entityId);
-            if (entity instanceof PlayerEntity player) {
-                WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, player == context.player());
-                FlyingPlayerTracker.startTrackingSound(player, sound);
-            }
+            Entity entity = context.player().level().getEntity(payload.entityId);
+            if (entity instanceof Player player) FlyingPlayerTracker.startTrackingSound(player, new WeightlessFlyingSoundInstance(player, player == context.player()));
         }
     }
 }

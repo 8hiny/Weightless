@@ -1,20 +1,28 @@
 {
   "required": true,
   "package": "shiny.weightless.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "EntityMixin",
     "ItemStackMixin",
     "LivingEntityMixin",
-    "PlayerEntityMixin",
-    "ServerPlayNetworkHandlerMixin"
+    "PlayerMixin",
+    "ServerGamePacketListenerMixin",
+    "ServerPlayerMixin"
+  ],
+  "client": [
+    "client.AvatarRendererMixin",
+    "client.GameRendererMixin",
+    "client.LivingEntityRendererMixin",
+    "client.LocalPlayerMixin",
+    "client.PlayerModelMixin",
+    "client.PostChainMixin",
+    "client.PostPassAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
   },
-  "client": [
-    "client.ClientPlayerEntityMixin",
-    "client.LivingEntityRendererMixin",
-    "client.PlayerEntityModelMixin"
-  ]
+  "overwrites": {
+    "requireAnnotations": true
+  }
 }
