@@ -2,7 +2,6 @@ package shiny.weightless.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
@@ -29,7 +28,6 @@ public class WeightlessClient implements ClientModInitializer {
     //Disconnect message for config mismatch
     public static final Component DISCONNECT_MESSAGE = Component.translatable("message.weightless.disconnect");
 
-    //TODO Add speed lines shader
     @Override
     public void onInitializeClient() {
         ClientPlayNetworking.registerGlobalReceiver(FlyingSoundPayload.TYPE, new FlyingSoundPayload.Handler());

@@ -28,7 +28,7 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
     private void weightless$updateRenderdata(AvatarlikeEntity avatar, AvatarRenderState state, float tickDelta, CallbackInfo ci) {
         if (avatar instanceof Player player) {
             state.setData(RenderStateDataKeys.WEIGHTLESS_FLYING, WeightlessComponent.flying(player));
-            state.setData(RenderStateDataKeys.IS_SPRINTING, player.isSprinting() || WeightlessComponent.inAutopilot(player));
+            state.setData(RenderStateDataKeys.IS_SPRINTING, player.isSprinting());
             state.setData(RenderStateDataKeys.IS_LOCAL_PLAYER, player.isLocalPlayer());
             state.setData(RenderStateDataKeys.FLIGHT_TICKS, WeightlessComponent.get(player).getFlightTicks());
             state.setData(RenderStateDataKeys.YAW, player.getYRot(tickDelta));

@@ -7,7 +7,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import shiny.weightless.common.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
-import shiny.weightless.common.util.WeightlessUtil;
 
 public record ToggleAutopilotPayload() implements CustomPacketPayload {
 
@@ -23,11 +22,7 @@ public record ToggleAutopilotPayload() implements CustomPacketPayload {
         @Override
         public void receive(ToggleAutopilotPayload payload, ServerPlayNetworking.Context context) {
             Player player = context.player();
-            boolean bl = WeightlessComponent.inAutopilot(player);
-            if (bl) {
-                WeightlessUtil.sendFlightSoundPackets(player);
-            }
-            WeightlessComponent.get(player).setAutopilot(!bl);
+            WeightlessComponent.get(player).toggleAutopilot();
         }
     }
 }

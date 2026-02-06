@@ -1,5 +1,6 @@
 package shiny.weightless.mixin.client;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.authlib.GameProfile;
@@ -28,10 +29,12 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     }
 
     @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;aiStep()V"))
-    private void weightless$requireHoldSprint(CallbackInfo ci) {
+    private void weightless$updateSprinting(CallbackInfo ci) {
         if (WeightlessComponent.flying(this)) {
-            boolean bl = WeightlessClient.AUTOPILOT.isDown() || this.isSlowDueToUsingItem();
-            if (!bl && this.isSprinting() && !Minecraft.getInstance().options.keySprint.isDown()) {
+            if (WeightlessClient.autopilotActive) {
+                if (!this.isSprinting()) this.setSprinting(true);
+            }
+            else if (!this.isSlowDueToUsingItem() && this.isSprinting() && !Minecraft.getInstance().options.keySprint.isDown()) {
                 this.setSprinting(false);
             }
         }
@@ -40,5 +43,10 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     @WrapOperation(method = "isSlowDueToUsingItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/component/UseEffects;canSprint()Z"))
     private boolean weightless$allowSpringWhileUsingItem(UseEffects useEffects, Operation<Boolean> original) {
         return original.call(useEffects) && (ModConfig.itemAffectSpeed || !WeightlessComponent.flying(this));
+    }
+
+    @ModifyReturnValue(method = "itemUseSpeedMultiplier", at = @At(value = "RETURN"))
+    private float weightless$preventSpeedReduction(float original) {
+        return !ModConfig.itemAffectSpeed && WeightlessComponent.flying(this) ? 1.0f : original;
     }
 }

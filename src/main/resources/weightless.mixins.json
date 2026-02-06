@@ -17,7 +17,8 @@
     "client.LocalPlayerMixin",
     "client.PlayerModelMixin",
     "client.PostChainMixin",
-    "client.PostPassAccessor"
+    "client.PostPassAccessor",
+    "client.RemotePlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

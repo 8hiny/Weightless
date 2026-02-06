@@ -1,9 +1,6 @@
 package shiny.weightless.common.util;
 
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,7 +12,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.component.WeightlessComponent;
-import shiny.weightless.common.network.FlyingSoundPayload;
 
 public class WeightlessUtil {
 
@@ -124,16 +120,5 @@ public class WeightlessUtil {
         z = Mth.clamp(z, -bound, bound);
 
         return new Vec3(x, y, z);
-    }
-
-    public static void sendFlightSoundPackets(Player source) {
-        if (!source.level().isClientSide()) {
-            FlyingSoundPayload payload = new FlyingSoundPayload(source.getId());
-
-            for (ServerPlayer recipient : PlayerLookup.tracking(source)) {
-                ServerPlayNetworking.send(recipient, payload);
-            }
-            ServerPlayNetworking.send((ServerPlayer) source, payload);
-        }
     }
 }

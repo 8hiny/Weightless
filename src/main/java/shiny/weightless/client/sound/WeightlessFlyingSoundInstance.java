@@ -29,7 +29,7 @@ public class WeightlessFlyingSoundInstance extends AbstractTickableSoundInstance
 
     @Override
     public void tick() {
-        if (!this.player.isRemoved() && WeightlessComponent.flying(this.player) && (this.player.isSprinting() || WeightlessComponent.inAutopilot(this.player))) {
+        if (!this.player.isRemoved() && WeightlessComponent.flying(this.player) && this.player.isSprinting()) {
             this.x = (float) this.player.getX();
             this.y = (float) this.player.getY();
             this.z = (float) this.player.getZ();

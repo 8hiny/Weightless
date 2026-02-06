@@ -31,7 +31,7 @@ public abstract class ServerPlayerMixin extends Player {
 
                 float speed = (float) (dx * dx + dy * dy + dz * dz);
                 if (exhaustion > 0.0f && speed >  1.0E-7) {
-                    if (this.isSprinting() || WeightlessComponent.inAutopilot(this)) {
+                    if (this.isSprinting()) {
                         this.causeFoodExhaustion(0.04f * exhaustion);
                     }
                     else {

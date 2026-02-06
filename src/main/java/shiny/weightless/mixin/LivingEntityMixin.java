@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.Weightless;
@@ -23,28 +22,10 @@ import shiny.weightless.common.util.WeightlessUtil;
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
 
-    @Unique private boolean wasSprintFlying = false;
     @Unique private int startFlyingTicks = 0;
 
     public LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
-    }
-
-
-    @Inject(method = "tick", at = @At(value = "HEAD"))
-    private void weightless$sprintingCallback(CallbackInfo ci) {
-        LivingEntity entity = (LivingEntity) (Object) this;
-
-        if (entity instanceof Player player && WeightlessComponent.has(player)) {
-            boolean bl = (entity.isSprinting() || WeightlessComponent.inAutopilot(player)) && WeightlessUtil.canFly(player);
-            if (bl && WeightlessComponent.flying(player) && !this.wasSprintFlying) {
-                WeightlessUtil.sendFlightSoundPackets(player);
-                this.wasSprintFlying = true;
-            }
-            else if (this.wasSprintFlying && (!bl || !WeightlessComponent.flying(player))) {
-                this.wasSprintFlying = false;
-            }
-        }
     }
 
     @WrapWithCondition(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;tickHeadTurn(F)V"))
@@ -57,11 +38,10 @@ public abstract class LivingEntityMixin extends Entity {
     }
 
     @WrapWithCondition(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;calculateEntityAnimation(Z)V"))
-    private boolean weightless$preventWalkAnimation(LivingEntity entity, boolean bl) {
+    private boolean weightless$preventLocalWalkAnimation(LivingEntity entity, boolean bl) {
         return !(entity instanceof Player player && WeightlessComponent.flying(player));
     }
 
-    //TODO Fix (sprint) flight speed reduction from autopilot
     @WrapOperation(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;travel(Lnet/minecraft/world/phys/Vec3;)V"))
     private void weightless$crosshairBasedMovement(LivingEntity entity, Vec3 movementInput, Operation<Void> original) {
         if (entity instanceof Player player && WeightlessComponent.has(player)) {
@@ -84,7 +64,7 @@ public abstract class LivingEntityMixin extends Entity {
             if (WeightlessComponent.flying(player)) {
                 if (bl) movementInput = new Vec3(0, 0, 1);
 
-                float speed = WeightlessUtil.calcFlightSpeed(entity, entity.isSprinting() || bl);
+                float speed = WeightlessUtil.calcFlightSpeed(entity, entity.isSprinting());
                 Vec3 movement = WeightlessUtil.inputToFlightVelocity(movementInput, speed, entity.getXRot(), entity.getYRot());
                 Vec3 velocity = entity.getDeltaMovement().add(movement).multiply(0.85, 0.85, 0.85);
 

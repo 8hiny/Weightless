@@ -14,6 +14,7 @@ public class WeightlessPosing {
         matrices.translate(0.0f, y, 0.0f);
     }
 
+    //TODO Rework these with Actions & Stuff as an example
     public static <T extends HumanoidModel<?>> void setAngles(T model, AvatarRenderState state, float tickDelta) {
         boolean sprinting = Boolean.TRUE.equals(state.getData(RenderStateDataKeys.IS_SPRINTING));
         Vec3 velocity = state.getDataOrDefault(RenderStateDataKeys.VELOCITY, Vec3.ZERO);

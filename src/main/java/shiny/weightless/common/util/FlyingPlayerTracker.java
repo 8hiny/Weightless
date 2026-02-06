@@ -7,6 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
 import shiny.weightless.common.component.WeightlessComponent;
+import shiny.weightless.common.config.ModConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 public class FlyingPlayerTracker {
 
-    /// Velocities tracked by the client. The first vector is the old velocity, the second one is the new velocity.
+    /// Player velocities tracked by the client. The first vector is the old velocity, the second one is the new velocity.
     private static final Map<UUID, Tuple<Vec3, Vec3>> trackedVelocities = new HashMap<>();
     private static final Map<UUID, WeightlessFlyingSoundInstance> trackedSounds = new HashMap<>();
 
@@ -76,10 +77,10 @@ public class FlyingPlayerTracker {
 
     private static void updateTrackedSounds(Minecraft client) {
         for (Player player : client.level.players()) {
-            if (player != client.player) {
-                if (!isTrackingSound(player.getUUID()) && WeightlessComponent.flying(player)
-                        && (player.isSprinting() || WeightlessComponent.inAutopilot(player))) {
-                    WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, player instanceof LocalPlayer);
+            if (!isTrackingSound(player.getUUID()) && WeightlessComponent.flying(player) && player.isSprinting()) {
+                boolean bl = player instanceof LocalPlayer;
+                if (!bl || ModConfig.selfFlightSound) {
+                    WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, bl);
                     startTrackingSound(player, sound);
                 }
             }

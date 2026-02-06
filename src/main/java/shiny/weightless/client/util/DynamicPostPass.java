@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-//TODO Need to somehow create a custom PostPass which rewrites its uniforms before rendering
 public class DynamicPostPass extends PostPass {
 
     private static final String SPEED_LINES_UNIFORM = "LinesConfig";

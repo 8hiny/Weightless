@@ -172,8 +172,8 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
         return this.autopilot && this.provider.getFoodData().getFoodLevel() > 6.0f && WeightlessUtil.canFly(this.provider);
     }
 
-    public void setAutopilot(boolean autopilot) {
-        this.autopilot = autopilot;
+    public void toggleAutopilot() {
+        this.autopilot = !autopilot;
         this.sync(false);
     }
 
