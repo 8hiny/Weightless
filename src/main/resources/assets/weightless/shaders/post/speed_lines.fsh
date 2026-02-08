@@ -14,9 +14,6 @@ layout(std140) uniform LinesConfig {
     float FlightSpeed;
 };
 
-const vec3 Gray = vec3(0.3, 0.59, 0.11);
-const float Saturation = 1.8;
-
 out vec4 fragColor;
 
 //From Giorgi Azmaipharashvili (MIT licenced): https://www.shadertoy.com/view/ctdfzN

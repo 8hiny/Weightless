@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import shiny.weightless.client.model.RenderStateDataKeys;
-import shiny.weightless.client.model.WeightlessPosing;
+import shiny.weightless.client.util.RenderStateDataKeys;
+import shiny.weightless.client.util.WeightlessPosing;
 
 @Mixin(PlayerModel.class)
 public abstract class PlayerModelMixin extends HumanoidModel<AvatarRenderState> {
@@ -23,21 +23,20 @@ public abstract class PlayerModelMixin extends HumanoidModel<AvatarRenderState> 
         super(modelPart);
     }
 
+    //TODO Fix weird limb jiggling when uncrouching while flying (Super high walk state speed value..?)
     @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/HumanoidModel;setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V"))
     private void weightless$updateLimbAngle(AvatarRenderState renderState, CallbackInfo ci) {
         if (Boolean.TRUE.equals(renderState.getData(RenderStateDataKeys.WEIGHTLESS_FLYING))) {
-            renderState.walkAnimationPos = Mth.lerp(0.01f, this.lastLimbPos, 0.0f);
+            if (!renderState.isCrouching) renderState.walkAnimationPos = Mth.lerp(0.01f, this.lastLimbPos, 0.0f);
             this.lastLimbPos = renderState.walkAnimationPos;
         }
     }
 
     @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/HumanoidModel;setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", shift = At.Shift.AFTER))
     private void weightless$applyFlightPose(AvatarRenderState renderState, CallbackInfo ci) {
-        if (Boolean.TRUE.equals(renderState.getData(RenderStateDataKeys.WEIGHTLESS_FLYING)) && !renderState.isCrouching) {
-            Minecraft client = Minecraft.getInstance();
-            boolean firstPerson = client.options.getCameraType().isFirstPerson();
-            if (!Boolean.TRUE.equals(renderState.getData(RenderStateDataKeys.IS_LOCAL_PLAYER)) || !firstPerson) {
-                WeightlessPosing.setAngles(this, renderState, client.getDeltaTracker().getRealtimeDeltaTicks());
+        if (!renderState.isCrouching && Boolean.TRUE.equals(renderState.getData(RenderStateDataKeys.WEIGHTLESS_FLYING))) {
+            if (!Boolean.TRUE.equals(renderState.getData(RenderStateDataKeys.IS_LOCAL_PLAYER)) || !Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
+                WeightlessPosing.setAngles(this, renderState);
             }
         }
     }

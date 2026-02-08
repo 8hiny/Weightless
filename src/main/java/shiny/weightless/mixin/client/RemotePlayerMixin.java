@@ -18,7 +18,7 @@ public abstract class RemotePlayerMixin extends AbstractClientPlayer {
 
     @WrapWithCondition(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/RemotePlayer;calculateEntityAnimation(Z)V"))
     private boolean weightless$preventRemoteWalkAnimation(RemotePlayer player, boolean bl) {
-        if (WeightlessComponent.flying(player)) {
+        if (!player.isCrouching() && WeightlessComponent.flying(player)) {
             player.walkAnimation.update(0.0f, 0.1f, 1.0f);
             return false;
         }

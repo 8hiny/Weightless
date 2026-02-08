@@ -3,10 +3,13 @@ package shiny.weightless.mixin;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.UseEffects;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -73,7 +76,13 @@ public abstract class LivingEntityMixin extends Entity {
                     double y = velocity.y;
                     double z = velocity.z;
 
-                    if (entity.isCrouching() || entity.isUsingItem()) y *= 0.5;
+                    if (entity.isCrouching()) {
+                        y *= 0.6;
+                    }
+                    else if (ModConfig.itemAffectSpeed && entity.isUsingItem()) {
+                        ItemStack stack = entity.getActiveItem();
+                        y *= Math.min(1.0, stack.getOrDefault(DataComponents.USE_EFFECTS, UseEffects.DEFAULT).speedMultiplier() * 3);
+                    }
 
                     if (Math.abs(x) < 0.003) {
                         x = 0.0;
@@ -98,10 +107,8 @@ public abstract class LivingEntityMixin extends Entity {
                     entity.fallDistance = 0.0f;
                 }
 
-                if (entity.isCrouching()) {
-                    entity.calculateEntityAnimation(false);
-                }
-                else entity.walkAnimation.update(0.0f, 0.1f, 1.0f);
+                if (entity.isCrouching()) entity.calculateEntityAnimation(false);
+                else entity.walkAnimation.update(0.01f, 0.1f, 1.0f);
 
                 entity.setOnGround(bl3);
             }

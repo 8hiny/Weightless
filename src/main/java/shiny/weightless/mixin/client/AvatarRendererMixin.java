@@ -12,7 +12,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import shiny.weightless.client.model.RenderStateDataKeys;
+import shiny.weightless.client.WeightlessClient;
+import shiny.weightless.client.util.RenderStateDataKeys;
 import shiny.weightless.common.component.WeightlessComponent;
 import shiny.weightless.common.util.FlyingPlayerTracker;
 
@@ -28,11 +29,11 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
     private void weightless$updateRenderdata(AvatarlikeEntity avatar, AvatarRenderState state, float tickDelta, CallbackInfo ci) {
         if (avatar instanceof Player player) {
             state.setData(RenderStateDataKeys.WEIGHTLESS_FLYING, WeightlessComponent.flying(player));
-            state.setData(RenderStateDataKeys.IS_SPRINTING, player.isSprinting());
             state.setData(RenderStateDataKeys.IS_LOCAL_PLAYER, player.isLocalPlayer());
+            state.setData(RenderStateDataKeys.IS_SHINY, player.getUUID().equals(WeightlessClient.SHINY_UUID));
             state.setData(RenderStateDataKeys.FLIGHT_TICKS, WeightlessComponent.get(player).getFlightTicks());
-            state.setData(RenderStateDataKeys.YAW, player.getYRot(tickDelta));
             state.setData(RenderStateDataKeys.VELOCITY, FlyingPlayerTracker.getLerpedVelocity(player.getUUID(), tickDelta));
+            state.setData(RenderStateDataKeys.PITCH, player.getXRot(tickDelta));
         }
     }
 }

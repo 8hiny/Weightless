@@ -69,7 +69,7 @@ public class WeightlessUtil {
         speed *= ModConfig.speedMultiplier;
 
         if (ModConfig.armorAffectSpeed) {
-            speed *= Math.max(0.1f, -0.025f * entity.getArmorValue() + 1);
+            speed *= Math.max(0.1f, (-0.025f * entity.getArmorValue() + 1) / ModConfig.armorSpeedMultiplier);
         }
 
         if (canReceiveAltitudeBonus(entity)) {
@@ -98,27 +98,16 @@ public class WeightlessUtil {
         }
     }
 
-    public static Vec3 calcDirectionalMovement(Vec3 velocity, float yaw, boolean sprinting) {
+    public static Vec3 calcDirectionalMovement(Vec3 velocity, float yaw) {
         Vec3 movement = velocity.yRot(yaw * (float) Math.PI / 180);
         double x = movement.x;
         double y = velocity.y;
         double z = movement.z;
-
-        if (sprinting) {
-            x *= 1.1f;
-            z *= 1.25f;
-        }
-
         double bound = Math.PI / 2.5;
-        if (y < 0.0f) {
-            x *= 1.0f - y;
-            z = Mth.lerp(y, z, -bound);
-        }
 
         x = Mth.clamp(x, -bound, bound);
         y = Mth.clamp(y, -bound, bound);
         z = Mth.clamp(z, -bound, bound);
-
         return new Vec3(x, y, z);
     }
 }

@@ -11,8 +11,5 @@ import java.util.Map;
 public interface PostPassAccessor {
 
     @Accessor("customUniforms")
-    Map<String, GpuBuffer> weightless$getCustomUniforms();
-
-    @Accessor("name")
-    String weightless$getName();
+    Map<String, GpuBuffer> weightless$getUniforms();
 }

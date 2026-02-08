@@ -7,6 +7,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.component.UseEffects;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,5 +49,11 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     @ModifyReturnValue(method = "itemUseSpeedMultiplier", at = @At(value = "RETURN"))
     private float weightless$preventSpeedReduction(float original) {
         return !ModConfig.itemAffectSpeed && WeightlessComponent.flying(this) ? 1.0f : original;
+    }
+
+    //TODO Make this work
+    @WrapOperation(method = "canStartSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;hasForwardImpulse()Z"))
+    private boolean weightles$allowOmniSprint(ClientInput input, Operation<Boolean> original) {
+        return original.call(input) || WeightlessComponent.flying(this);
     }
 }

@@ -19,6 +19,7 @@ public class ModConfig extends MidnightConfig {
     @Entry public static boolean increaseSpeedWhenHigh = true;
     @Entry(min = 1.0f) public static float highSpeedMultiplier = 1.5f;
     @Entry public static boolean armorAffectSpeed = false;
+    @Entry(min = 1.0f) public static float armorSpeedMultiplier = 1.0f;
     @Entry public static boolean itemAffectSpeed = true;
 
     @Comment(centered = true) public static Comment stun;
@@ -36,6 +37,7 @@ public class ModConfig extends MidnightConfig {
     //Client config options
     @Entry(category = CLIENT) public static boolean renderSpeedlines = true;
     @Entry(category = CLIENT) public static boolean selfFlightSound = true;
+    @Entry(category = CLIENT) public static boolean legLiftedPose = true;
 
     public static int encode() {
         String encoded = ""
@@ -50,6 +52,7 @@ public class ModConfig extends MidnightConfig {
                 + increaseSpeedWhenHigh
                 + highSpeedMultiplier
                 + armorAffectSpeed
+                + armorSpeedMultiplier
                 + itemAffectSpeed
                 + preventRangedWeapons
                 + increaseKnockback

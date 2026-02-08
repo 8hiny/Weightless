@@ -57,8 +57,10 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
             boolean autopilot = WeightlessClient.autopilotActive;
 
             if (component.toggled != toggled) {
-                ClientPlayNetworking.send(new ToggleWeightlessPayload());
-                component.toggled = toggled;
+                if (!toggled || !component.isStunned()) {
+                    ClientPlayNetworking.send(new ToggleWeightlessPayload());
+                    component.toggled = toggled;
+                }
             }
             if (component.autopilot != autopilot) {
                 ClientPlayNetworking.send(new ToggleAutopilotPayload());
@@ -169,7 +171,7 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
     }
 
     public boolean inAutopilot() {
-        return this.autopilot && this.provider.getFoodData().getFoodLevel() > 6.0f && WeightlessUtil.canFly(this.provider);
+        return this.autopilot && this.provider.getFoodData().hasEnoughFood() && WeightlessUtil.canFly(this.provider);
     }
 
     public void toggleAutopilot() {
@@ -183,6 +185,7 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
 
     public void setStunned() {
         this.remainingStunTicks = ModConfig.stunDuration;
+        if (this.toggled) this.toggled = false;
         this.sync(false);
     }
 

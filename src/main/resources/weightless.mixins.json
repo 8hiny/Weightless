@@ -13,10 +13,12 @@
   "client": [
     "client.AvatarRendererMixin",
     "client.GameRendererMixin",
+    "client.LevelRendererMixin",
     "client.LivingEntityRendererMixin",
     "client.LocalPlayerMixin",
     "client.PlayerModelMixin",
-    "client.PostChainMixin",
+    "client.PostChainAccessor",
+    "client.PostPassMixin",
     "client.PostPassAccessor",
     "client.RemotePlayerMixin"
   ],
