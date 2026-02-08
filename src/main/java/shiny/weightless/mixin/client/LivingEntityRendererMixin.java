@@ -55,12 +55,15 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
     @WrapMethod(method = "getRenderType")
     private @Nullable RenderType weightless$modifyRenderType(S state, boolean bl, boolean bl2, boolean bl3, Operation<RenderType> original) {
         if (Boolean.TRUE.equals(state.getData(RenderStateDataKeys.IS_SHINY))) {
-            this.shinyRenderType = WeightlessRenderTypes.getShinyPlaceholder(this.getTextureLocation(state));
+            this.shinyRenderType = WeightlessRenderTypes.getShinyPlaceholder(this.getTextureLocation(state), bl3);
             return WeightlessRenderTypes.getEntityFullyEmissive(this.getTextureLocation(state), bl3);
         }
         return original.call(state, bl, bl2, bl3);
     }
 
+    //TODO Add a feature renderer which renders evil glowing red eyes to the main buffer
+    //This is only visible when the post shader doesn't apply, for example when the player is viewed at
+    //through tinted glass
     //Renders the player model in pure black onto the world as a placeholder
     @WrapOperation(method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;ILnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V"))
     private void weightless$renderShinyPlaceholder(SubmitNodeCollector instance, Model model, Object object, PoseStack poseStack, RenderType renderType, int i, int j, int k, TextureAtlasSprite textureAtlasSprite, int l, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, Operation<Void> original) {

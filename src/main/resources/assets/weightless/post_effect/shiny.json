@@ -1,15 +1,355 @@
 {
     "targets": {
+        "glow": {},
         "swap": {}
     },
     "passes": [
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/glow",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "minecraft:main"
+            },
+            {
+              "sampler_name": "Shiny",
+              "target": "weightless:shiny"
+            }
+          ],
+          "output": "glow"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/scale",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "glow"
+            }
+          ],
+          "uniforms": {
+            "ScaleConfig": [
+              {
+                "name": "UpOrDown",
+                "type": "int",
+                "value": 0
+              }
+            ]
+          },
+          "output": "swap"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/blur",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "swap"
+            }
+          ],
+          "uniforms": {
+            "BlurConfig": [
+              {
+                "name": "BlurDir",
+                "type": "vec2",
+                "value": [1.0, 0.0]
+              }
+            ]
+          },
+          "output": "glow"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/blur",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "glow"
+            }
+          ],
+          "uniforms": {
+            "BlurConfig": [
+              {
+                "name": "BlurDir",
+                "type": "vec2",
+                "value": [0.0, 1.0]
+              }
+            ]
+          },
+          "output": "swap"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/scale",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "swap"
+            }
+          ],
+          "uniforms": {
+            "ScaleConfig": [
+              {
+                "name": "UpOrDown",
+                "type": "int",
+                "value": 0
+              }
+            ]
+          },
+          "output": "glow"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/blur",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "glow"
+            }
+          ],
+          "uniforms": {
+            "BlurConfig": [
+              {
+                "name": "BlurDir",
+                "type": "vec2",
+                "value": [1.0, 0.0]
+              }
+            ]
+          },
+          "output": "swap"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/blur",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "swap"
+            }
+          ],
+          "uniforms": {
+            "BlurConfig": [
+              {
+                "name": "BlurDir",
+                "type": "vec2",
+                "value": [0.0, 1.0]
+              }
+            ]
+          },
+          "output": "glow"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/scale",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "glow"
+            }
+          ],
+          "uniforms": {
+            "ScaleConfig": [
+              {
+                "name": "UpOrDown",
+                "type": "int",
+                "value": 0
+              }
+            ]
+          },
+          "output": "swap"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/blur",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "swap"
+            }
+          ],
+          "uniforms": {
+            "BlurConfig": [
+              {
+                "name": "BlurDir",
+                "type": "vec2",
+                "value": [1.0, 0.0]
+              }
+            ]
+          },
+          "output": "glow"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/blur",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "glow"
+            }
+          ],
+          "uniforms": {
+            "BlurConfig": [
+              {
+                "name": "BlurDir",
+                "type": "vec2",
+                "value": [0.0, 1.0]
+              }
+            ]
+          },
+          "output": "swap"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/scale",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "swap"
+            }
+          ],
+          "uniforms": {
+            "ScaleConfig": [
+              {
+                "name": "UpOrDown",
+                "type": "int",
+                "value": 0
+              }
+            ]
+          },
+          "output": "glow"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/blur",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "glow"
+            }
+          ],
+          "uniforms": {
+            "BlurConfig": [
+              {
+                "name": "BlurDir",
+                "type": "vec2",
+                "value": [1.0, 0.0]
+              }
+            ]
+          },
+          "output": "swap"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/blur",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "swap"
+            }
+          ],
+          "uniforms": {
+            "BlurConfig": [
+              {
+                "name": "BlurDir",
+                "type": "vec2",
+                "value": [0.0, 1.0]
+              }
+            ]
+          },
+          "output": "glow"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/scale",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "glow"
+            }
+          ],
+          "uniforms": {
+            "ScaleConfig": [
+              {
+                "name": "UpOrDown",
+                "type": "int",
+                "value": 1
+              }
+            ]
+          },
+          "output": "swap"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/scale",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "swap"
+            }
+          ],
+          "uniforms": {
+            "ScaleConfig": [
+              {
+                "name": "UpOrDown",
+                "type": "int",
+                "value": 1
+              }
+            ]
+          },
+          "output": "glow"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/scale",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "glow"
+            }
+          ],
+          "uniforms": {
+            "ScaleConfig": [
+              {
+                "name": "UpOrDown",
+                "type": "int",
+                "value": 1
+              }
+            ]
+          },
+          "output": "swap"
+        },
+        {
+          "vertex_shader": "minecraft:core/screenquad",
+          "fragment_shader": "weightless:post/scale",
+          "inputs": [
+            {
+              "sampler_name": "In",
+              "target": "swap"
+            }
+          ],
+          "uniforms": {
+            "ScaleConfig": [
+              {
+                "name": "UpOrDown",
+                "type": "int",
+                "value": 1
+              }
+            ]
+          },
+          "output": "glow"
+        },
         {
             "vertex_shader": "minecraft:core/screenquad",
             "fragment_shader": "weightless:post/shiny",
             "inputs": [
                 {
-                    "sampler_name": "In",
-                    "target": "minecraft:main"
+                  "sampler_name": "In",
+                  "target": "minecraft:main"
+                },
+                {
+                    "sampler_name": "Glow",
+                    "target": "glow"
                 },
                 {
                   "sampler_name": "Shiny",

@@ -19,6 +19,7 @@ public class WeightlessRenderTypes {
             (id, affectsOutline) -> {
                 RenderSetup renderSetup = RenderSetup.builder(WeightlessRenderPipelines.SHINY_PLACEHOLDER)
                         .withTexture("Sampler0", id)
+                        .setOutline(affectsOutline ? RenderSetup.OutlineProperty.AFFECTS_OUTLINE : RenderSetup.OutlineProperty.NONE)
                         .sortOnUpload()
                         .createRenderSetup();
                 return RenderType.create("shiny_placeholder", renderSetup);
@@ -38,8 +39,8 @@ public class WeightlessRenderTypes {
             }
     );
 
-    public static RenderType getShinyPlaceholder(Identifier id) {
-        return SHINY_PLACEHOLDER.apply(id, false);
+    public static RenderType getShinyPlaceholder(Identifier id, boolean affectsOutline) {
+        return SHINY_PLACEHOLDER.apply(id, affectsOutline);
     }
 
     public static RenderType getEntityFullyEmissive(Identifier id, boolean affectsOutline) {
