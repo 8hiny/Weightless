@@ -13,15 +13,13 @@ layout(std140) uniform SamplerInfo {
 out vec4 fragColor;
 
 void main() {
-    //vec4 mainColor = texture(InSampler, texCoord);
+    vec4 mainColor = texture(InSampler, texCoord);
     vec4 shinyColor = texture(ShinySampler, texCoord);
-    fragColor = shinyColor;
 
-    //Colors only shiny's player model completely red
-    //if (shinyColor.rgb != vec3(0.0, 0.0, 0.0)) {
-        //fragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    //}
-    //else {
-        //discard;
-    //}
+    if (mainColor.rgb == (0.0, 0.0, 0.0) && shinyColor.rgb != (0.0, 0.0, 0.0)) {
+        fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+    else {
+        discard;
+    }
 }

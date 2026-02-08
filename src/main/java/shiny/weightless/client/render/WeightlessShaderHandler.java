@@ -5,6 +5,7 @@ import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.resource.ResourceHandle;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelTargetBundle;
@@ -44,9 +45,9 @@ public class WeightlessShaderHandler implements ResourceManagerReloadListener {
         this.shinyTarget = new TextureTarget("Shiny", this.client.getWindow().getWidth(), this.client.getWindow().getHeight(), true);
     }
 
-    public void resize(int i, int j) {
+    public void resize(int screenWidth, int screenHeight) {
         if (this.shinyTarget != null) {
-            this.shinyTarget.resize(i, j);
+            this.shinyTarget.resize(screenWidth, screenHeight);
         }
     }
 
@@ -62,16 +63,23 @@ public class WeightlessShaderHandler implements ResourceManagerReloadListener {
         }
     }
 
-    public void copyToMain() {
+    public void clear() {
+        if (this.shinyTarget != null && this.client.player != null) {
+            RenderTarget renderTarget = this.shinyHandle.get();
+            RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(renderTarget.getColorTexture(), 0, renderTarget.getDepthTexture(), 1.0);
+        }
+    }
+
+    public void copyToMainAfterOutline() {
         if (this.shinyTarget != null && this.client.player != null) {
             this.shinyTarget.blitAndBlendToTexture(this.client.getMainRenderTarget().getColorTextureView());
         }
     }
 
-    public void renderShiny(Minecraft client, FrameGraphBuilder fgb, PostChain.TargetBundle targets, int screenWidth, int screenHeight) {
+    public void renderShinyShader(Minecraft client, FrameGraphBuilder fgb, PostChain.TargetBundle targets, int screenWidth, int screenHeight) {
         PostChain postChain = client.getShaderManager().getPostChain(SHINY_TARGET_ID, SHINY_TARGETS);
         if (postChain != null) {
-            postChain.addToFrame(fgb, screenWidth, screenHeight, new DynamicTargetBundle(targets, Map.of(SHINY_TARGET_ID, shinyHandle)));
+            postChain.addToFrame(fgb, screenWidth, screenHeight, new DynamicTargetBundle(targets, Map.of(SHINY_TARGET_ID, this.shinyHandle)));
         }
     }
 

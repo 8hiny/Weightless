@@ -18,7 +18,6 @@
     "client.LocalPlayerMixin",
     "client.PlayerModelMixin",
     "client.PostChainAccessor",
-    "client.PostPassMixin",
     "client.PostPassAccessor",
     "client.RemotePlayerMixin"
   ],

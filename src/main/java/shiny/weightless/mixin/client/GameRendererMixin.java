@@ -18,6 +18,6 @@ public class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;doEntityOutline()V", shift = At.Shift.AFTER))
     private void weightless$blendBufferToMain(DeltaTracker deltaTracker, boolean bl, CallbackInfo ci) {
-        WeightlessClient.getShaderHandler().copyToMain();
+        WeightlessClient.getShaderHandler().copyToMainAfterOutline();
     }
 }

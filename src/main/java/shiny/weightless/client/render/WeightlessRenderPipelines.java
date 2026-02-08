@@ -15,8 +15,19 @@ public class WeightlessRenderPipelines {
             .withSampler("Sampler0")
             .withVertexFormat(DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS)
             .buildSnippet();
+    public static final RenderPipeline.Snippet SHINY_PLACEHOLDER_SNIPPET = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+            .withVertexShader(Weightless.id("core/shiny_placeholder"))
+            .withFragmentShader(Weightless.id("core/shiny_placeholder"))
+            .withSampler("Sampler0")
+            .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
+            .buildSnippet();
 
     //Pipelines
+    public static final RenderPipeline SHINY_PLACEHOLDER = RenderPipelines.register(
+            RenderPipeline.builder(SHINY_PLACEHOLDER_SNIPPET)
+                    .withLocation("pipeline/shiny_placeholder")
+                    .build()
+    );
     public static final RenderPipeline ENTITY_FULLY_EMISSIVE = RenderPipelines.register(
             RenderPipeline.builder(RenderPipelines.ENTITY_EMISSIVE_SNIPPET)
                     .withLocation("pipeline/entity_fully_emissive")

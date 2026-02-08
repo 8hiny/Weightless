@@ -54,6 +54,7 @@ public class LevelRendererMixin {
     @Inject(method = "addMainPass", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/framegraph/FramePass;executes(Ljava/lang/Runnable;)V"))
     private void weightless$updateReadWriteStatus(FrameGraphBuilder fgb, Frustum frustum, Matrix4f matrix4f, GpuBufferSlice slice, boolean bl, LevelRenderState state, DeltaTracker deltaTracker, ProfilerFiller profilerFiller, CallbackInfo ci, @Local(ordinal = 0) FramePass framePass) {
         WeightlessClient.getShaderHandler().updateReadWriteStatus(state, framePass);
+        WeightlessClient.getShaderHandler().clear();
     }
 
     //Runs after the entity outline post processing shader is rendered and before particles are rendered
@@ -64,7 +65,7 @@ public class LevelRendererMixin {
 
         //Shiny shader
         if (Boolean.TRUE.equals(this.levelRenderState.getData(RenderStateDataKeys.HAS_SHINY_ENTITY))) {
-            WeightlessClient.getShaderHandler().renderShiny(this.minecraft, fgb, this.targets, i, j);
+            WeightlessClient.getShaderHandler().renderShinyShader(this.minecraft, fgb, this.targets, i, j);
         }
 
         //Speed lines shader
