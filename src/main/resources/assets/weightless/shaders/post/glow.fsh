@@ -1,6 +1,5 @@
 #version 330
 
-uniform sampler2D InSampler;
 uniform sampler2D ShinySampler;
 
 in vec2 texCoord;
@@ -12,20 +11,9 @@ layout(std140) uniform SamplerInfo {
 
 out vec4 fragColor;
 
-bool isShiny(vec2 uv) {
-    return texture(InSampler, uv).a < 0.01 && texture(ShinySampler, uv).a > 0.0;
-}
+const float INTENSITY = 2.0;
 
 void main() {
-    if (isShiny(texCoord)) {
-        float mask = texture(ShinySampler, texCoord).a;
-        float intensity = mask * 12.0;
-        //vec3 glowColor = vec3(1.0, 0.9, 0.6);
-        vec3 glowColor = vec3(0.9, 0.69, 0.18);
-
-        fragColor = vec4(glowColor * intensity, 1.0);
-    }
-    else {
-        discard;
-    }
+    vec4 shinyColor = texture(ShinySampler, texCoord);
+    fragColor = vec4(shinyColor.rgb * INTENSITY, 1.0);
 }

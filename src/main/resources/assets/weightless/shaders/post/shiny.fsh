@@ -1,8 +1,10 @@
 #version 330
 
-uniform sampler2D InSampler;
+uniform sampler2D MainSampler;
+uniform sampler2D MainDepthSampler;
 uniform sampler2D GlowSampler;
 uniform sampler2D ShinySampler;
+uniform sampler2D ShinyDepthSampler;
 
 in vec2 texCoord;
 
@@ -13,14 +15,26 @@ layout(std140) uniform SamplerInfo {
 
 out vec4 fragColor;
 
-bool isShiny(vec2 uv) {
-    return texture(InSampler, uv).a < 0.01 && texture(ShinySampler, uv).a > 0.0;
-}
-
 void main() {
-    vec3 scene = texture(isShiny(texCoord) ? ShinySampler : InSampler, texCoord).rgb;
-    vec3 bloom = texture(GlowSampler, texCoord).rgb;
+    float mainDepth = texture(MainDepthSampler, texCoord).r;
+    float shinyDepth = texture(ShinyDepthSampler, texCoord).r;
+    vec4 mainColor = texture(MainSampler, texCoord);
+    vec4 shinyColor = texture(ShinySampler, texCoord);
 
-    bloom *= (1.0 - texture(ShinySampler, texCoord).a);
-    fragColor = vec4(scene += bloom * 1.5, 1.0);
+    if (shinyColor.a > 0.0 && mainColor == vec4(1.0)) {
+        if (mainDepth < shinyDepth) {
+            fragColor = fragColor = mainColor;
+        }
+        else {
+            fragColor = shinyColor;
+        }
+    }
+    else {
+        vec3 bloom = texture(GlowSampler, texCoord).rgb;
+
+        if (mainColor == vec4(1.0)) { //Only adjust bloom amount for where shiny is if nothing is in front of shiny
+            bloom *= (1.0 - texture(ShinySampler, texCoord).a);
+        }
+        fragColor = vec4(mainColor.rgb += bloom * 1.5, 1.0);
+    }
 }

@@ -61,7 +61,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
         return original.call(state, bl, bl2, bl3);
     }
 
-    //TODO Add a feature renderer which renders evil glowing red eyes to the main buffer
+    //TODO Add a feature renderer which renders evil glowing red eyes to the main buffer (or fix the transparency issues when viewing the player through tinted glass)
     //This is only visible when the post shader doesn't apply, for example when the player is viewed at
     //through tinted glass
     //Renders the player model in pure black onto the world as a placeholder

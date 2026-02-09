@@ -25,10 +25,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import shiny.weightless.client.WeightlessClient;
-import shiny.weightless.client.render.SpeedLinesPatcher;
 import shiny.weightless.client.util.RenderStateDataKeys;
-import shiny.weightless.common.component.WeightlessComponent;
-import shiny.weightless.common.config.ModConfig;
 
 @Mixin(LevelRenderer.class)
 public class LevelRendererMixin {
@@ -44,7 +41,6 @@ public class LevelRendererMixin {
         }
     }
 
-    //Runs after the entity outline shader is loaded to the FrameGraphBuilder and before it is rendered
     @WrapOperation(method = "renderLevel", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;addPass(Ljava/lang/String;)Lcom/mojang/blaze3d/framegraph/FramePass;"))
     private FramePass weightless$loadShadersToFrame(FrameGraphBuilder fgb, String string, Operation<FramePass> original) {
         WeightlessClient.getShaderHandler().loadToFrameGraphBuilder(fgb);
@@ -57,22 +53,13 @@ public class LevelRendererMixin {
         WeightlessClient.getShaderHandler().clear();
     }
 
-    //Runs after the entity outline post processing shader is rendered and before particles are rendered
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleEngine;extract(Lnet/minecraft/client/renderer/state/ParticlesRenderState;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/Camera;F)V"))
-    private void weightless$drawPostShaders(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci, @Local(ordinal = 0) FrameGraphBuilder fgb) {
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addLateDebugPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4f;)V"))
+    private void weightless$drawShiny(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci, @Local(ordinal = 0) FrameGraphBuilder fgb) {
         int i = this.minecraft.getMainRenderTarget().width;
         int j = this.minecraft.getMainRenderTarget().height;
 
-        //Shiny shader
         if (Boolean.TRUE.equals(this.levelRenderState.getData(RenderStateDataKeys.HAS_SHINY_ENTITY))) {
-            WeightlessClient.getShaderHandler().renderShinyShader(this.minecraft, fgb, this.targets, i, j);
-        }
-
-        //Speed lines shader
-        if (ModConfig.renderSpeedlines && this.minecraft.player != null && WeightlessComponent.flying(this.minecraft.player)) {
-            SpeedLinesPatcher.renderSpeedLines(
-                    fgb, this.targets, i, j, (int) this.minecraft.level.getGameTime(), (float) Math.min(this.minecraft.player.getDeltaMovement().lengthSqr(), 1.0f)
-            );
+            WeightlessClient.getShaderHandler().renderShinyShader(fgb, this.targets, i, j);
         }
     }
 

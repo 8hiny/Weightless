@@ -76,8 +76,8 @@ public class WeightlessShaderHandler implements ResourceManagerReloadListener {
         }
     }
 
-    public void renderShinyShader(Minecraft client, FrameGraphBuilder fgb, PostChain.TargetBundle targets, int screenWidth, int screenHeight) {
-        PostChain postChain = client.getShaderManager().getPostChain(SHINY_TARGET_ID, SHINY_TARGETS);
+    public void renderShinyShader(FrameGraphBuilder fgb, PostChain.TargetBundle targets, int screenWidth, int screenHeight) {
+        PostChain postChain = this.client.getShaderManager().getPostChain(SHINY_TARGET_ID, SHINY_TARGETS);
         if (postChain != null) {
             postChain.addToFrame(fgb, screenWidth, screenHeight, new DynamicTargetBundle(targets, Map.of(SHINY_TARGET_ID, this.shinyHandle)));
         }

@@ -15,7 +15,7 @@ layout(std140) uniform BlurConfig {
 
 out vec4 fragColor;
 
-const float STRENGTH = 8.0;
+const float STRENGTH = 6.0;
 
 void main() {
     vec2 oneTexel = 1.0 / InSize;

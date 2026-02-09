@@ -1,7 +1,8 @@
 #version 330
 
-uniform sampler2D InSampler;
+uniform sampler2D MainDepthSampler;
 uniform sampler2D ShinySampler;
+uniform sampler2D ShinyDepthSampler;
 
 in vec2 texCoord;
 
@@ -12,15 +13,12 @@ layout(std140) uniform SamplerInfo {
 
 out vec4 fragColor;
 
-
 void main() {
-    vec4 mainColor = texture(InSampler, texCoord);
     vec4 shinyColor = texture(ShinySampler, texCoord);
-
-    if (mainColor.a < 0.01 && shinyColor.a > 0.0) {
-        fragColor = shinyColor;
+    if (texture(MainDepthSampler, texCoord).r < texture(ShinyDepthSampler, texCoord).r && shinyColor.a > 0.0) {
+        fragColor = vec4(0.0);
     }
     else {
-        fragColor = mainColor;
+        fragColor = shinyColor;
     }
 }

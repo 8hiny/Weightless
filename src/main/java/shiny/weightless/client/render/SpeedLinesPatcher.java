@@ -2,7 +2,8 @@ package shiny.weightless.client.render;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
-import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelTargetBundle;
@@ -37,11 +38,11 @@ public class SpeedLinesPatcher {
         return postChain;
     }
 
-    public static void renderSpeedLines(FrameGraphBuilder fgb, PostChain.TargetBundle targets, int screenWidth, int screenHeight, int worldTime, float speed) {
+    public static void renderSpeedLines(GraphicsResourceAllocator gra, RenderTarget renderTarget, int worldTime, float speed) {
         try (GpuBuffer.MappedView mappedView = RenderSystem.getDevice().createCommandEncoder().mapBuffer(linesBuffer, false, true)) {
             Std140Builder builder = Std140Builder.intoBuffer(mappedView.data());
             builder.putInt(worldTime).putFloat(speed);
         }
-        speedLines.addToFrame(fgb, screenWidth, screenHeight, targets);
+        speedLines.process(renderTarget, gra);
     }
 }
