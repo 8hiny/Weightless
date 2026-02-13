@@ -1,4 +1,4 @@
-package shiny.weightless.client.render;
+package shiny.weightless.client.util;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.ResourceHandle;

@@ -31,6 +31,7 @@ public abstract class LivingEntityMixin extends Entity {
         super(entityType, level);
     }
 
+    //TODO Rebalance spear to NOT oneshot everything when flying
     @WrapWithCondition(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;tickHeadTurn(F)V"))
     private boolean weightless$preventBodyTurn(LivingEntity entity, float f) {
         if (entity instanceof Player player && WeightlessComponent.flying(player)) {
@@ -106,10 +107,7 @@ public abstract class LivingEntityMixin extends Entity {
                 else {
                     entity.fallDistance = 0.0f;
                 }
-
-                if (entity.isCrouching()) entity.calculateEntityAnimation(false);
-                else entity.walkAnimation.update(0.01f, 0.1f, 1.0f);
-
+                entity.calculateEntityAnimation(false);
                 entity.setOnGround(bl3);
             }
             else {

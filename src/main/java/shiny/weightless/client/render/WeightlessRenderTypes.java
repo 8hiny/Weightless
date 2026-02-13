@@ -5,14 +5,13 @@ import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
-import shiny.weightless.client.WeightlessClient;
 
 import java.util.function.BiFunction;
 
 public class WeightlessRenderTypes {
 
     //OutputTargets
-    private static final OutputTarget SHINY_TARGET = new OutputTarget("shiny_target", () -> WeightlessClient.getShaderHandler().shinyTarget());
+    private static final OutputTarget SHINY_TARGET = new OutputTarget("shiny_target", () -> WeightlessShaderHandler.getInstance().shinyTarget());
 
     //RenderTypes
     private static final BiFunction<Identifier, Boolean, RenderType> SHINY_PLACEHOLDER = Util.memoize(

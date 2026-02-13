@@ -12,14 +12,16 @@
   ],
   "client": [
     "client.AvatarRendererMixin",
+    "client.EntityRenderDispatcherMixin",
     "client.GameRendererMixin",
+    "client.GuiEntityRendererMixin",
+    "client.HumanoidModelMixin",
     "client.LevelRendererMixin",
     "client.LivingEntityRendererMixin",
     "client.LocalPlayerMixin",
     "client.PlayerModelMixin",
     "client.PostChainAccessor",
-    "client.PostPassAccessor",
-    "client.RemotePlayerMixin"
+    "client.PostPassAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -16,6 +16,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import org.jetbrains.annotations.Nullable;
+import shiny.weightless.client.util.DynamicTargetBundle;
 import shiny.weightless.client.util.RenderStateDataKeys;
 import shiny.weightless.common.Weightless;
 
@@ -28,13 +29,21 @@ public class WeightlessShaderHandler implements ResourceManagerReloadListener {
     public static final Identifier SHINY_TARGET_ID = Weightless.id("shiny");
     public static final Set<Identifier> SHINY_TARGETS = Set.of(LevelTargetBundle.MAIN_TARGET_ID, SHINY_TARGET_ID);
 
+    private static WeightlessShaderHandler instance;
     private final Minecraft client;
     public ResourceHandle<RenderTarget> shinyHandle;
     private RenderTarget shinyTarget;
 
-    public WeightlessShaderHandler(Minecraft client) {
+    private WeightlessShaderHandler(Minecraft client) {
         this.client = client;
         ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloader(RELOADER_ID, this);
+    }
+
+    public static WeightlessShaderHandler getInstance() {
+        if (instance == null) {
+            instance = new WeightlessShaderHandler(Minecraft.getInstance());
+        }
+        return instance;
     }
 
     @Override
@@ -70,7 +79,7 @@ public class WeightlessShaderHandler implements ResourceManagerReloadListener {
         }
     }
 
-    public void copyToMainAfterOutline() {
+    public void blitToMainBuffer() {
         if (this.shinyTarget != null && this.client.player != null) {
             this.shinyTarget.blitAndBlendToTexture(this.client.getMainRenderTarget().getColorTextureView());
         }

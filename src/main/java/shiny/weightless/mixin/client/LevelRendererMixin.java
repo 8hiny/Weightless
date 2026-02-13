@@ -25,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import shiny.weightless.client.WeightlessClient;
+import shiny.weightless.client.render.WeightlessShaderHandler;
 import shiny.weightless.client.util.RenderStateDataKeys;
 
 @Mixin(LevelRenderer.class)
@@ -43,14 +44,14 @@ public class LevelRendererMixin {
 
     @WrapOperation(method = "renderLevel", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;addPass(Ljava/lang/String;)Lcom/mojang/blaze3d/framegraph/FramePass;"))
     private FramePass weightless$loadShadersToFrame(FrameGraphBuilder fgb, String string, Operation<FramePass> original) {
-        WeightlessClient.getShaderHandler().loadToFrameGraphBuilder(fgb);
+        WeightlessShaderHandler.getInstance().loadToFrameGraphBuilder(fgb);
         return original.call(fgb, string);
     }
 
     @Inject(method = "addMainPass", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/framegraph/FramePass;executes(Ljava/lang/Runnable;)V"))
     private void weightless$updateReadWriteStatus(FrameGraphBuilder fgb, Frustum frustum, Matrix4f matrix4f, GpuBufferSlice slice, boolean bl, LevelRenderState state, DeltaTracker deltaTracker, ProfilerFiller profilerFiller, CallbackInfo ci, @Local(ordinal = 0) FramePass framePass) {
-        WeightlessClient.getShaderHandler().updateReadWriteStatus(state, framePass);
-        WeightlessClient.getShaderHandler().clear();
+        WeightlessShaderHandler.getInstance().updateReadWriteStatus(state, framePass);
+        WeightlessShaderHandler.getInstance().clear();
     }
 
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addLateDebugPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4f;)V"))
@@ -59,12 +60,7 @@ public class LevelRendererMixin {
         int j = this.minecraft.getMainRenderTarget().height;
 
         if (Boolean.TRUE.equals(this.levelRenderState.getData(RenderStateDataKeys.HAS_SHINY_ENTITY))) {
-            WeightlessClient.getShaderHandler().renderShinyShader(fgb, this.targets, i, j);
+            WeightlessShaderHandler.getInstance().renderShinyShader(fgb, this.targets, i, j);
         }
-    }
-
-    @Inject(method = "renderLevel", at = @At(value = "TAIL"))
-    private void weightless$resetLevelStateData(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
-        this.levelRenderState.setData(RenderStateDataKeys.IS_SHINY, false);
     }
 }

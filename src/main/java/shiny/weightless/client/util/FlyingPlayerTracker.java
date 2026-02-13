@@ -1,4 +1,4 @@
-package shiny.weightless.common.util;
+package shiny.weightless.client.util;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -77,11 +77,14 @@ public class FlyingPlayerTracker {
 
     private static void updateTrackedSounds(Minecraft client) {
         for (Player player : client.level.players()) {
-            if (!isTrackingSound(player.getUUID()) && WeightlessComponent.flying(player) && player.isSprinting()) {
-                boolean bl = player instanceof LocalPlayer;
-                if (!bl || ModConfig.selfFlightSound) {
-                    WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, bl);
-                    startTrackingSound(player, sound);
+            if (!isTrackingSound(player.getUUID()) && WeightlessComponent.flying(player)) {
+                double speed = getLerpedVelocity(player.getUUID(), client.getDeltaTracker().getGameTimeDeltaPartialTick(true)).lengthSqr();
+                if (speed > 0.1 || player.isSprinting()) {
+                    boolean bl = player instanceof LocalPlayer;
+                    if (!bl || ModConfig.selfFlightSound) {
+                        WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, bl);
+                        startTrackingSound(player, sound);
+                    }
                 }
             }
         }

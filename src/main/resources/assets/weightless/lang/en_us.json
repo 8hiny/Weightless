@@ -53,6 +53,8 @@
   "weightless.midnightconfig.damageRequirement.tooltip" : "The threshold any received damage must pass to stun a player while flying.",
   "weightless.midnightconfig.stunDuration" : "Stun Duration",
   "weightless.midnightconfig.stunDuration.tooltip" : "The flight stun duration in ticks.",
+  "weightless.midnightconfig.requireHoldSprint" : "Sprint key requirement",
+  "weightless.midnightconfig.requireHoldSprint.tooltip" : "Whether to require holding down the sprint key to sprint while flying.",
   "weightless.midnightconfig.renderSpeedlines" : "Render Speed Lines",
   "weightless.midnightconfig.renderSpeedlines.tooltip" : "Whether sprinting while flying should display speed lines on the screen.",
   "weightless.midnightconfig.selfFlightSound" : "Flying Sound",

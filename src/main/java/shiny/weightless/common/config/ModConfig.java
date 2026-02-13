@@ -35,6 +35,7 @@ public class ModConfig extends MidnightConfig {
     @Entry(min = 0.0f) public static float knockbackMultiplier = 4.0f;
 
     //Client config options
+    @Entry(category = CLIENT) public static boolean requireHoldSprint = true;
     @Entry(category = CLIENT) public static boolean renderSpeedlines = true;
     @Entry(category = CLIENT) public static boolean selfFlightSound = true;
     @Entry(category = CLIENT) public static boolean legLiftedPose = true;

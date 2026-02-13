@@ -8,7 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import shiny.weightless.client.sound.WeightlessFlyingSoundInstance;
-import shiny.weightless.common.util.FlyingPlayerTracker;
+import shiny.weightless.client.util.FlyingPlayerTracker;
 import shiny.weightless.common.Weightless;
 
 public record FlyingSoundPayload(int entityId) implements CustomPacketPayload {

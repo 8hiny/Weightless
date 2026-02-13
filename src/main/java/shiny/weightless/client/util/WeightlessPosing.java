@@ -1,6 +1,7 @@
 package shiny.weightless.client.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.AnimationUtils;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
@@ -17,8 +18,7 @@ public class WeightlessPosing {
         matrices.translate(0.0f, y, 0.0f);
     }
 
-    //TODO Clamp body and limb rotations to prevent clipping and weirdness at high speeds
-    //TODO Apply arm oscillation to legs too (but opposite, so transforms for left arm apply to right leg)
+    //TODO Fix cape rotations and maybe pivot
     public static <T extends HumanoidModel<?>> void setAngles(T model, AvatarRenderState state) {
         Vec3 velocity = state.getDataOrDefault(RenderStateDataKeys.VELOCITY, Vec3.ZERO);
         Vec3 movement = WeightlessUtil.calcDirectionalMovement(velocity, state.bodyRot);
@@ -37,22 +37,20 @@ public class WeightlessPosing {
         if (state.leftHandItemStack.isEmpty()) {
             model.leftArm.xRot += z;
             model.leftArm.yRot -= x;
-            //model.leftArm.zRot = model.leftArm.zRot - z * 0.2f - x * 0.5f;
-            model.leftArm.zRot -= x * 0.5f - z * 0.2f;
+            model.leftArm.zRot -= x * 0.5f + z * 0.2f;
         }
 
         if (state.rightHandItemStack.isEmpty()) {
             model.rightArm.xRot += z;
             model.rightArm.yRot -= x;
-            //model.rightArm.zRot = model.rightArm.zRot + z * 0.2f + x * 0.5f;
-            model.rightArm.zRot -= x * 0.5f + z * 0.2f;
+            model.rightArm.zRot -= x * 0.5f - z * 0.2f;
         }
 
-        model.leftLeg.xRot += z - Math.min(x * 1.5f, 0.0f);
-        model.leftLeg.zRot = model.leftLeg.zRot - z * 0.15f + x * (x > 0 ? 2.0f : 3.0f);
+        model.leftLeg.xRot += z - Math.min(x * 0.8f, 0.0f);
+        model.leftLeg.zRot = model.leftLeg.zRot - z * 0.15f + x * (x > 0 ? 1.5f : 2.5f);
 
-        model.rightLeg.xRot += z + Math.max(x * 1.5f, 0.0f);
-        model.rightLeg.zRot = model.rightLeg.zRot + z * 0.15f + x * (x > 0 ? 3.0f : 2.0f);
+        model.rightLeg.xRot += z + Math.max(x * 0.8f, 0.0f);
+        model.rightLeg.zRot = model.rightLeg.zRot + z * 0.15f + x * (x > 0 ? 2.5f : 1.5f);
 
         //Lift leg matching the main hand
         if (ModConfig.legLiftedPose) {
@@ -68,23 +66,44 @@ public class WeightlessPosing {
         }
 
         //Spread out limbs when flying downwards
-        if (y < 0.0f && pitch > 0.0f) {
+        if (y < 0.0f && pitch > -0.1f) {
             pitch = Math.min((float) Math.PI, pitch * (float) (Math.PI / 180) * -y * 2.2f);
             model.body.xRot += pitch * 0.9f;
 
             model.leftArm.xRot += pitch;
+            model.leftArm.yRot += pitch * 0.1f;
+            model.leftArm.zRot += pitch * 0.05f;
+
             model.rightArm.xRot += pitch;
+            model.rightArm.yRot -= pitch * 0.1f;
+            model.rightArm.zRot -= pitch * 0.05f;
 
             model.leftLeg.xRot += pitch;
+            model.leftLeg.yRot += pitch * 0.05f;
+            model.leftLeg.zRot += pitch * 0.02f;
+
             model.rightLeg.xRot += pitch;
+            model.rightLeg.yRot -= pitch * 0.05f;
+            model.rightLeg.zRot += pitch * 0.02f;
         }
 
         //Limit limb rotations to prevent clipping
-        model.leftArm.zRot = Math.min(model.leftArm.zRot, model.body.zRot);
-        model.rightArm.zRot = Math.max(model.rightArm.zRot, model.body.zRot);
+        model.leftArm.yRot = Math.max(model.leftArm.yRot, model.body.yRot);
+        model.rightArm.yRot = Math.min(model.rightArm.yRot, model.body.yRot);
 
-        model.leftLeg.zRot = Math.min(model.leftLeg.zRot, model.rightLeg.zRot);
-        model.rightLeg.zRot = Math.max(model.rightLeg.zRot, model.leftLeg.zRot);
+        if (Math.abs(model.body.zRot) > 0.001f) {
+            model.leftArm.zRot = Math.min(model.leftArm.zRot, model.body.zRot);
+            model.rightArm.zRot = Math.max(model.rightArm.zRot, model.body.zRot);
+        }
+
+        if (y > -0.2f) {
+            model.leftLeg.zRot = Math.min(model.leftLeg.zRot, model.rightLeg.zRot);
+            model.rightLeg.zRot = Math.max(model.rightLeg.zRot, model.leftLeg.zRot);
+        }
+
+        //Oscillate legs
+        AnimationUtils.bobModelPart(model.leftLeg, state.ageInTicks, -0.2f);
+        AnimationUtils.bobModelPart(model.rightLeg, state.ageInTicks, 0.2f);
 
         //Reposition pivot points
         rotatePivotAround(model.leftArm, model.body);

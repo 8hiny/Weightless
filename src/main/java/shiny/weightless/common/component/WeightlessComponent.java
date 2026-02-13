@@ -1,5 +1,7 @@
 package shiny.weightless.common.component;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -10,13 +12,16 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.sync.AutoSyncedComponent;
 import org.ladysnake.cca.api.v3.component.tick.ServerTickingComponent;
-import shiny.weightless.client.WeightlessClient;
 import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.network.ToggleAutopilotPayload;
 import shiny.weightless.common.network.ToggleWeightlessPayload;
 import shiny.weightless.common.util.WeightlessUtil;
 
 public class WeightlessComponent implements AutoSyncedComponent, ServerTickingComponent {
+
+    private static boolean updatedOnWorldLoad;
+    public static boolean clientToggled;
+    public static boolean clientAutopilot;
 
     private final Player provider;
     private boolean enabled;
@@ -29,6 +34,11 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
 
     public WeightlessComponent(Player provider) {
         this.provider = provider;
+    }
+
+    public static void init() {
+        ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((client, world) -> updatedOnWorldLoad = false);
+        ClientTickEvents.START_CLIENT_TICK.register(WeightlessComponent::clientTick);
     }
 
     public static WeightlessComponent get(@NotNull Player player) {
@@ -47,24 +57,25 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
         return ModComponents.WEIGHTLESS.get(player).inAutopilot();
     }
 
-    public void sync(boolean simplified) {
+    private void sync(boolean simplified) {
         ModComponents.WEIGHTLESS.sync(this.provider, (buf, recipient) -> this.writeSyncPacket(buf, recipient, simplified));
     }
 
-    public static void clientTick(Minecraft client) {
+    private static void clientTick(Minecraft client) {
         ModComponents.WEIGHTLESS.maybeGet(client.player).ifPresent(component -> {
-            boolean toggled = WeightlessClient.weightlessActive;
-            boolean autopilot = WeightlessClient.autopilotActive;
-
-            if (component.toggled != toggled) {
-                if (!toggled || !component.isStunned()) {
+            if (!updatedOnWorldLoad) {
+                clientToggled = component.toggled;
+                updatedOnWorldLoad = true;
+            }
+            if (component.toggled != clientToggled) {
+                if (!clientToggled || !component.isStunned()) {
                     ClientPlayNetworking.send(new ToggleWeightlessPayload());
-                    component.toggled = toggled;
+                    component.toggled = clientToggled;
                 }
             }
-            if (component.autopilot != autopilot) {
+            if (component.autopilot != clientAutopilot) {
                 ClientPlayNetworking.send(new ToggleAutopilotPayload());
-                component.autopilot = autopilot;
+                component.autopilot = clientAutopilot;
             }
         });
     }
@@ -100,7 +111,7 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
     public void attain() {
         this.enabled = true;
         this.wasEnabled = true;
-        sync(false);
+        this.sync(false);
     }
 
     public void reset() {
@@ -109,7 +120,7 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
         this.autopilot = false;
         this.flying = false;
         this.remainingStunTicks = 0;
-        sync(false);
+        this.sync(false);
     }
 
     @Override

@@ -99,15 +99,20 @@ public class WeightlessUtil {
     }
 
     public static Vec3 calcDirectionalMovement(Vec3 velocity, float yaw) {
-        Vec3 movement = velocity.yRot(yaw * (float) Math.PI / 180);
-        double x = movement.x;
-        double y = velocity.y;
-        double z = movement.z;
-        double bound = Math.PI / 2.5;
+        double d = velocity.lengthSqr();
+        if (d < 1.0e-7) {
+            return Vec3.ZERO;
+        }
+        else {
+            Vec3 movement = velocity.yRot(yaw * (float) Math.PI / 180);
+            double x = movement.x;
+            double y = velocity.y;
+            double z = movement.z;
 
-        x = Mth.clamp(x, -bound, bound);
-        y = Mth.clamp(y, -bound, bound);
-        z = Mth.clamp(z, -bound, bound);
-        return new Vec3(x, y, z);
+            x = Mth.clamp(x, -0.65, 0.65);
+            y = Mth.clamp(y, -0.75, 0.75);
+            z = Mth.clamp(z, -1.0, 1.0);
+            return new Vec3(x, y, z);
+        }
     }
 }

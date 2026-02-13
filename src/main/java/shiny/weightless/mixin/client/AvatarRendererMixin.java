@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import shiny.weightless.client.WeightlessClient;
 import shiny.weightless.client.util.RenderStateDataKeys;
 import shiny.weightless.common.component.WeightlessComponent;
-import shiny.weightless.common.util.FlyingPlayerTracker;
+import shiny.weightless.client.util.FlyingPlayerTracker;
 
 @Mixin(AvatarRenderer.class)
 public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & ClientAvatarEntity>

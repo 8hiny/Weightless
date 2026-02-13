@@ -7,7 +7,6 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.component.UseEffects;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,14 +14,12 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import shiny.weightless.client.WeightlessClient;
 import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.component.WeightlessComponent;
 
 @Mixin(LocalPlayer.class)
 public abstract class LocalPlayerMixin extends AbstractClientPlayer {
 
-    @Shadow public abstract boolean isUsingItem();
     @Shadow protected abstract boolean isSlowDueToUsingItem();
 
     public LocalPlayerMixin(ClientLevel clientLevel, GameProfile gameProfile) {
@@ -32,10 +29,10 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;aiStep()V"))
     private void weightless$updateSprinting(CallbackInfo ci) {
         if (WeightlessComponent.flying(this)) {
-            if (WeightlessClient.autopilotActive) {
+            if (WeightlessComponent.inAutopilot(this)) {
                 if (!this.isSprinting()) this.setSprinting(true);
             }
-            else if (!this.isSlowDueToUsingItem() && this.isSprinting() && !Minecraft.getInstance().options.keySprint.isDown()) {
+            else if (ModConfig.requireHoldSprint && !this.isSlowDueToUsingItem() && this.isSprinting() && !Minecraft.getInstance().options.keySprint.isDown()) {
                 this.setSprinting(false);
             }
         }
@@ -49,11 +46,5 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     @ModifyReturnValue(method = "itemUseSpeedMultiplier", at = @At(value = "RETURN"))
     private float weightless$preventSpeedReduction(float original) {
         return !ModConfig.itemAffectSpeed && WeightlessComponent.flying(this) ? 1.0f : original;
-    }
-
-    //TODO Make this work
-    @WrapOperation(method = "canStartSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;hasForwardImpulse()Z"))
-    private boolean weightles$allowOmniSprint(ClientInput input, Operation<Boolean> original) {
-        return original.call(input) || WeightlessComponent.flying(this);
     }
 }
