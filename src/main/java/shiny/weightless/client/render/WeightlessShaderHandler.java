@@ -17,7 +17,6 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import org.jetbrains.annotations.Nullable;
 import shiny.weightless.client.util.DynamicTargetBundle;
-import shiny.weightless.client.util.RenderStateDataKeys;
 import shiny.weightless.common.Weightless;
 
 import java.util.Map;
@@ -26,8 +25,9 @@ import java.util.Set;
 public class WeightlessShaderHandler implements ResourceManagerReloadListener {
 
     public static final Identifier RELOADER_ID = Weightless.id("weightless_shader_loader");
-    public static final Identifier SHINY_TARGET_ID = Weightless.id("shiny");
-    public static final Set<Identifier> SHINY_TARGETS = Set.of(LevelTargetBundle.MAIN_TARGET_ID, SHINY_TARGET_ID);
+    public static final Identifier SHINY_ID = Weightless.id("shiny");
+    public static final Set<Identifier> SHINY_DEPTH_TARGETS = Set.of(LevelTargetBundle.MAIN_TARGET_ID, LevelTargetBundle.ITEM_ENTITY_TARGET_ID, SHINY_ID);
+    public static final Set<Identifier> SHINY_TARGETS = Set.of(LevelTargetBundle.MAIN_TARGET_ID, SHINY_ID);
 
     private static WeightlessShaderHandler instance;
     private final Minecraft client;
@@ -62,7 +62,7 @@ public class WeightlessShaderHandler implements ResourceManagerReloadListener {
 
     public void loadToFrameGraphBuilder(FrameGraphBuilder frameGraphBuilder) {
         if (this.shinyTarget != null) {
-            this.shinyHandle = frameGraphBuilder.importExternal(SHINY_TARGET_ID.getPath(), this.shinyTarget);
+            this.shinyHandle = frameGraphBuilder.importExternal(SHINY_ID.getPath(), this.shinyTarget);
         }
     }
 
@@ -85,10 +85,21 @@ public class WeightlessShaderHandler implements ResourceManagerReloadListener {
         }
     }
 
+    //If advanced transparency is active, run a shader which takes in the item entity depth buffer
+    //Otherwise, only sample the main depth buffer
     public void renderShinyShader(FrameGraphBuilder fgb, PostChain.TargetBundle targets, int screenWidth, int screenHeight) {
-        PostChain postChain = this.client.getShaderManager().getPostChain(SHINY_TARGET_ID, SHINY_TARGETS);
+        DynamicTargetBundle bundle = new DynamicTargetBundle(targets, Map.of(SHINY_ID, this.shinyHandle));
+        PostChain postChain = this.client.getShaderManager().getPostChain(
+                Weightless.id(Minecraft.useShaderTransparency() ? "depth_transparent" : "depth"),
+                SHINY_DEPTH_TARGETS
+        );
         if (postChain != null) {
-            postChain.addToFrame(fgb, screenWidth, screenHeight, new DynamicTargetBundle(targets, Map.of(SHINY_TARGET_ID, this.shinyHandle)));
+            postChain.addToFrame(fgb, screenWidth, screenHeight, bundle);
+        }
+
+        PostChain postChain2 = this.client.getShaderManager().getPostChain(SHINY_ID, SHINY_TARGETS);
+        if (postChain2 != null) {
+            postChain2.addToFrame(fgb, screenWidth, screenHeight, bundle);
         }
     }
 

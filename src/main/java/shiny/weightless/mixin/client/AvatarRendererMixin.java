@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import shiny.weightless.client.WeightlessClient;
-import shiny.weightless.client.util.RenderStateDataKeys;
+import shiny.weightless.client.render.RenderStateDataKeys;
 import shiny.weightless.common.component.WeightlessComponent;
 import shiny.weightless.client.util.FlyingPlayerTracker;
 
@@ -28,7 +28,14 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V", at = @At(value = "TAIL"))
     private void weightless$updateRenderdata(AvatarlikeEntity avatar, AvatarRenderState state, float tickDelta, CallbackInfo ci) {
         if (avatar instanceof Player player) {
-            state.setData(RenderStateDataKeys.WEIGHTLESS_FLYING, WeightlessComponent.flying(player));
+            boolean bl = WeightlessComponent.flying(player);
+            if (bl) {
+                state.capeFlap = 0.0f;
+                state.capeLean *= 0.4f;
+                state.capeLean2 *= 0.4f;
+            }
+
+            state.setData(RenderStateDataKeys.WEIGHTLESS_FLYING, bl);
             state.setData(RenderStateDataKeys.IS_LOCAL_PLAYER, player.isLocalPlayer());
             state.setData(RenderStateDataKeys.IS_SHINY, player.getUUID().equals(WeightlessClient.SHINY_UUID));
             state.setData(RenderStateDataKeys.FLIGHT_TICKS, WeightlessComponent.get(player).getFlightTicks());

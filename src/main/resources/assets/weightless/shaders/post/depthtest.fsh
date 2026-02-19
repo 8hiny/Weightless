@@ -1,6 +1,7 @@
 #version 330
 
 uniform sampler2D MainDepthSampler;
+uniform sampler2D ItemDepthSampler;
 uniform sampler2D ShinySampler;
 uniform sampler2D ShinyDepthSampler;
 
@@ -11,14 +12,23 @@ layout(std140) uniform SamplerInfo {
     vec2 InSize;
 };
 
+layout(std140) uniform MaskConfig {
+    int UseTransparency;
+};
+
 out vec4 fragColor;
 
 void main() {
-    vec4 shinyColor = texture(ShinySampler, texCoord);
-    if (texture(MainDepthSampler, texCoord).r < texture(ShinyDepthSampler, texCoord).r && shinyColor.a > 0.0) {
-        fragColor = vec4(0.0);
-    }
-    else {
-        fragColor = shinyColor;
+    fragColor = texture(ShinySampler, texCoord);
+    float shinyDepth = texture(ShinyDepthSampler, texCoord).r;
+
+    if (fragColor.a > 0.0) {
+        if (UseTransparency == 1) {
+            float itemDepth = texture(ItemDepthSampler, texCoord).r;
+            if (texture(ItemDepthSampler, texCoord).r < shinyDepth) fragColor = vec4(0.0);
+        }
+        if (texture(MainDepthSampler, texCoord).r < shinyDepth) {
+            fragColor = vec4(0.0);
+        }
     }
 }

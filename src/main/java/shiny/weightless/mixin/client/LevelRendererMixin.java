@@ -7,12 +7,17 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
@@ -26,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import shiny.weightless.client.WeightlessClient;
 import shiny.weightless.client.render.WeightlessShaderHandler;
-import shiny.weightless.client.util.RenderStateDataKeys;
+import shiny.weightless.client.render.RenderStateDataKeys;
 
 @Mixin(LevelRenderer.class)
 public class LevelRendererMixin {
@@ -34,6 +39,14 @@ public class LevelRendererMixin {
     @Shadow @Final private Minecraft minecraft;
     @Shadow @Final private LevelTargetBundle targets;
     @Shadow @Final private LevelRenderState levelRenderState;
+
+    @WrapOperation(method = "submitEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;submit(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lnet/minecraft/client/renderer/state/CameraRenderState;DDDLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V"))
+    private void weightless$captureInWorld(EntityRenderDispatcher instance, EntityRenderState entityRenderState, CameraRenderState cameraRenderState, double d, double e, double f, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, Operation<Void> original) {
+        if (Boolean.TRUE.equals(entityRenderState.getData(RenderStateDataKeys.IS_SHINY))) {
+            entityRenderState.setData(RenderStateDataKeys.IN_WORLD, true);
+        }
+        original.call(instance, entityRenderState, cameraRenderState, d, e, f, poseStack, submitNodeCollector);
+    }
 
     @Inject(method = "extractVisibleEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;extractEntity(Lnet/minecraft/world/entity/Entity;F)Lnet/minecraft/client/renderer/entity/state/EntityRenderState;", shift = At.Shift.AFTER))
     private void weightless$extractShinyEntity(Camera camera, Frustum frustum, DeltaTracker deltaTracker, LevelRenderState levelRenderState, CallbackInfo ci, @Local(ordinal = 0) Entity entity) {

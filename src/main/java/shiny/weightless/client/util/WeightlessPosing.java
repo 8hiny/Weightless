@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.Vec3;
+import shiny.weightless.client.render.RenderStateDataKeys;
 import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.util.WeightlessUtil;
 
@@ -18,7 +19,6 @@ public class WeightlessPosing {
         matrices.translate(0.0f, y, 0.0f);
     }
 
-    //TODO Fix cape rotations and maybe pivot
     public static <T extends HumanoidModel<?>> void setAngles(T model, AvatarRenderState state) {
         Vec3 velocity = state.getDataOrDefault(RenderStateDataKeys.VELOCITY, Vec3.ZERO);
         Vec3 movement = WeightlessUtil.calcDirectionalMovement(velocity, state.bodyRot);

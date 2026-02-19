@@ -25,7 +25,7 @@ public abstract class ServerPlayerMixin extends Player {
             if (!this.isPassenger() && WeightlessComponent.flying(this)) {
                 float exhaustion = ModConfig.hungerMultiplier;
 
-                if (WeightlessUtil.canReceiveAltitudeBonus(this)) {
+                if (WeightlessUtil.canReceiveAltitudeBonus(this) && ModConfig.reduceHungerWhenHigh) {
                     exhaustion *= ModConfig.highHungerReduction;
                 }
 

@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import shiny.weightless.client.util.RenderStateDataKeys;
+import shiny.weightless.client.render.RenderStateDataKeys;
 import shiny.weightless.client.util.WeightlessPosing;
 
 @Mixin(PlayerModel.class)

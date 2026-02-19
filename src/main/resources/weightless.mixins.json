@@ -12,9 +12,7 @@
   ],
   "client": [
     "client.AvatarRendererMixin",
-    "client.EntityRenderDispatcherMixin",
     "client.GameRendererMixin",
-    "client.GuiEntityRendererMixin",
     "client.HumanoidModelMixin",
     "client.LevelRendererMixin",
     "client.LivingEntityRendererMixin",

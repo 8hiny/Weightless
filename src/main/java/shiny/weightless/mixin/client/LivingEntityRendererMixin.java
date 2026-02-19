@@ -26,19 +26,16 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import shiny.weightless.client.util.EntityInGuiRenderExtension;
-import shiny.weightless.client.util.RenderStateDataKeys;
+import shiny.weightless.client.render.RenderStateDataKeys;
 import shiny.weightless.client.util.WeightlessPosing;
 import shiny.weightless.client.render.WeightlessRenderTypes;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>>
-        extends EntityRenderer<T, S> implements EntityInGuiRenderExtension {
+        extends EntityRenderer<T, S> {
 
     @Shadow public abstract Identifier getTextureLocation(S livingEntityRenderState);
-    @Shadow protected M model;
-    @Unique RenderType shinyRenderType;
-    @Unique boolean isRenderedInGui;
+    @Unique private RenderType shinyRenderType;
 
     protected LivingEntityRendererMixin(EntityRendererProvider.Context context) {
         super(context);
@@ -53,23 +50,21 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
         }
     }
 
-    //TODO Make gui rendering better (might not be compatible with modded gui's)
+    //The strategy here is to render the player with a new RenderLayer
+    //When the player is rendered in the world, we additionally render the player to a separate buffer in order to apply bloom
     @WrapMethod(method = "getRenderType")
     private @Nullable RenderType weightless$modifyRenderType(S state, boolean bl, boolean bl2, boolean bl3, Operation<RenderType> original) {
-        if (Boolean.TRUE.equals(state.getData(RenderStateDataKeys.IS_SHINY))) {
-            if (!this.isRenderedInGui) {
-                this.shinyRenderType = WeightlessRenderTypes.getShinyPlaceholder(this.getTextureLocation(state), bl3);
+        if (!bl2 && Boolean.TRUE.equals(state.getData(RenderStateDataKeys.IS_SHINY))) {
+            boolean inWorld = Boolean.TRUE.equals(state.getData(RenderStateDataKeys.IN_WORLD));
+            if (inWorld) {
+                this.shinyRenderType = WeightlessRenderTypes.getEntityFullyEmissive(this.getTextureLocation(state), false, bl3);
+                state.setData(RenderStateDataKeys.IN_WORLD, false);
             }
-            else {
-                this.shinyRenderType = null;
-            }
-            this.isRenderedInGui = false;
-            return WeightlessRenderTypes.getEntityFullyEmissive(this.getTextureLocation(state), bl3);
+            return WeightlessRenderTypes.getEntityFullyEmissive(this.getTextureLocation(state), inWorld, bl3);
         }
         return original.call(state, bl, bl2, bl3);
     }
 
-    //TODO Fix z-fighting when walk animation is applied (very strange)
     @WrapOperation(method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;ILnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V"))
     private void weightless$renderShinyPlaceholder(SubmitNodeCollector instance, Model model, Object object, PoseStack poseStack, RenderType renderType, int i, int j, int k, TextureAtlasSprite textureAtlasSprite, int l, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, Operation<Void> original) {
         if (this.shinyRenderType != null) {
@@ -77,15 +72,5 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
             this.shinyRenderType = null;
         }
         original.call(instance, model, object, poseStack, renderType, i, j, k, textureAtlasSprite, l, crumblingOverlay);
-    }
-
-    @Override
-    public boolean isRenderedInGui() {
-        return this.isRenderedInGui;
-    }
-
-    @Override
-    public void setRenderedInGui(boolean value) {
-        this.isRenderedInGui = value;
     }
 }

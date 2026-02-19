@@ -30,7 +30,7 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     private void weightless$updateSprinting(CallbackInfo ci) {
         if (WeightlessComponent.flying(this)) {
             if (WeightlessComponent.inAutopilot(this)) {
-                if (!this.isSprinting()) this.setSprinting(true);
+                if (!this.isSprinting() && !this.isUnderWater()) this.setSprinting(true);
             }
             else if (ModConfig.requireHoldSprint && !this.isSlowDueToUsingItem() && this.isSprinting() && !Minecraft.getInstance().options.keySprint.isDown()) {
                 this.setSprinting(false);

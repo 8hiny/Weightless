@@ -6,27 +6,6 @@
     "passes": [
         {
           "vertex_shader": "minecraft:core/screenquad",
-          "fragment_shader": "weightless:post/depthtest",
-          "inputs": [
-            {
-              "sampler_name": "MainDepth",
-              "target": "minecraft:main",
-              "use_depth_buffer": true
-            },
-            {
-              "sampler_name": "Shiny",
-              "target": "weightless:shiny"
-            },
-            {
-              "sampler_name": "ShinyDepth",
-              "target": "weightless:shiny",
-              "use_depth_buffer": true
-            }
-          ],
-          "output": "weightless:shiny"
-        },
-        {
-          "vertex_shader": "minecraft:core/screenquad",
           "fragment_shader": "weightless:post/glow",
           "inputs": [
             {

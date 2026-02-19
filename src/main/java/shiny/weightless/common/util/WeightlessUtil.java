@@ -13,7 +13,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.component.WeightlessComponent;
 
-public class WeightlessUtil {
+public final class WeightlessUtil {
+
+    private WeightlessUtil() {
+    }
 
     public static boolean canFly(Player player) {
         return player.canBeSeenByAnyone()
@@ -27,7 +30,7 @@ public class WeightlessUtil {
     }
 
     public static boolean canReceiveAltitudeBonus(Entity entity) {
-        return ModConfig.increaseSpeedWhenHigh && entity.position().y >= ModConfig.altitude && !WeightlessUtil.isNearBlock(entity, 8);
+        return entity.position().y >= ModConfig.altitude && !WeightlessUtil.isNearBlock(entity, 8);
     }
 
     public static boolean isNearBlock(Entity entity, int radius) {
@@ -72,7 +75,7 @@ public class WeightlessUtil {
             speed *= Math.max(0.1f, (-0.025f * entity.getArmorValue() + 1) / ModConfig.armorSpeedMultiplier);
         }
 
-        if (canReceiveAltitudeBonus(entity)) {
+        if (ModConfig.increaseSpeedWhenHigh && canReceiveAltitudeBonus(entity)) {
             speed *= ModConfig.highSpeedMultiplier;
         }
         return speed;

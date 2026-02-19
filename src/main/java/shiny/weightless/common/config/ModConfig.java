@@ -1,10 +1,16 @@
 package shiny.weightless.common.config;
 
 import eu.midnightdust.lib.config.MidnightConfig;
+import shiny.weightless.common.Weightless;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ModConfig extends MidnightConfig {
 
-    public static final String CLIENT = "client";
+    private static final String CLIENT = "client";
+    private static boolean connectedToServer;
 
     //Common config options
     @Comment(centered = true) public static Comment exhaustion;
@@ -22,6 +28,7 @@ public class ModConfig extends MidnightConfig {
     @Entry(min = 1.0f) public static float armorSpeedMultiplier = 1.0f;
     @Entry public static boolean itemAffectSpeed = true;
 
+
     @Comment(centered = true) public static Comment stun;
     @Entry public static StunType stunType = StunType.ALL;
     @Entry(min = 0.0f) public static float damageRequirement = 8.0f;
@@ -35,33 +42,70 @@ public class ModConfig extends MidnightConfig {
     @Entry(min = 0.0f) public static float knockbackMultiplier = 4.0f;
 
     //Client config options
-    @Entry(category = CLIENT) public static boolean requireHoldSprint = true;
-    @Entry(category = CLIENT) public static boolean renderSpeedlines = true;
-    @Entry(category = CLIENT) public static boolean selfFlightSound = true;
-    @Entry(category = CLIENT) public static boolean legLiftedPose = true;
+    @Entry(category = CLIENT) @Client public static boolean requireHoldSprint = true;
+    @Entry(category = CLIENT) @Client public static boolean renderSpeedlines = true;
+    @Entry(category = CLIENT) @Client public static boolean selfFlightSound = true;
+    @Entry(category = CLIENT) @Client public static boolean legLiftedPose = true;
 
-    public static int encode() {
-        String encoded = ""
-                + altitude
-                + allPlayersWeightless
-                + exhaust
-                + hungerMultiplier
-                + reduceHungerWhenHigh
-                + highHungerReduction
-                + speedMultiplier
-                + movementSpeedAffectSpeed
-                + increaseSpeedWhenHigh
-                + highSpeedMultiplier
-                + armorAffectSpeed
-                + armorSpeedMultiplier
-                + itemAffectSpeed
-                + preventRangedWeapons
-                + increaseKnockback
-                + knockbackMultiplier
-                + stunType
-                + damageRequirement
-                + stunDuration;
-        return encoded.hashCode();
+    public static void setConnectedToServer(boolean value) {
+        connectedToServer = value;
+    }
+
+    public static String encodeSettings() {
+        StringBuilder builder = new StringBuilder();
+        for (Field field : ModConfig.class.getFields()) {
+            if (field.isAnnotationPresent(Entry.class) && !field.isAnnotationPresent(Client.class)) {
+                try {
+                    builder.append(field.get(null)).append(",");
+                } catch (IllegalAccessException ignored) {
+                }
+            }
+        }
+        return builder.toString();
+    }
+
+    public static void decodeAndUpdateSettings(String string) {
+        String[] values = string.split(",");
+        List<Field> fields = getEntries(ModConfig.class.getFields());
+        if (values.length == fields.size()) {
+            for (int i = 0; i < values.length; i++) {
+                Field field = fields.get(i);
+                if (field.isAnnotationPresent(Entry.class) && !field.isAnnotationPresent(Client.class)) {
+                    try {
+                        updateField(field, values[i]);
+                    } catch (IllegalAccessException ignored) {
+                    }
+                }
+            }
+            write(Weightless.MOD_ID);
+        }
+    }
+
+    private static List<Field> getEntries(Field[] fields) {
+        List<Field> list = new ArrayList<>();
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(Entry.class) && !field.isAnnotationPresent(Client.class)) {
+                list.add(field);
+            }
+        }
+        return list;
+    }
+
+    private static void updateField(Field field, String value) throws IllegalAccessException {
+        switch (field.get(null)) {
+            case Integer ignored -> field.setInt(null, Integer.parseInt(value));
+            case Float ignored -> field.setFloat(null, Float.parseFloat(value));
+            case Boolean ignored -> field.setBoolean(null, Boolean.parseBoolean(value));
+            case StunType ignored -> field.set(null, Enum.valueOf(StunType.class, value));
+            default -> {}
+        }
+    }
+
+    @Override
+    public void writeChanges() {
+        if (!connectedToServer) {
+            super.writeChanges();
+        }
     }
 
     public enum StunType {
