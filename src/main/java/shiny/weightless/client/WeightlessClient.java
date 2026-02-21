@@ -5,13 +5,16 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.world.entity.player.Player;
 import shiny.weightless.client.util.FlyingPlayerTracker;
 import shiny.weightless.common.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
 import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.network.SyncConfigPayload;
 import shiny.weightless.common.network.FlyingSoundPayload;
+import traben.entity_model_features.EMFAnimationApi;
 
 import java.util.UUID;
 
@@ -65,5 +68,11 @@ public class WeightlessClient implements ClientModInitializer {
                 FlyingPlayerTracker.update(client);
             }
         });
+
+        if (FabricLoader.getInstance().isModLoaded("entity_model_features")) {
+            EMFAnimationApi.registerVanillaModelCondition(emfEntity ->
+                    ModConfig.overrideAnimations && emfEntity instanceof Player player && !player.isCrouching() && WeightlessComponent.flying(player)
+            );
+        }
     }
 }

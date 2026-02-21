@@ -26,8 +26,7 @@ public class ModConfig extends MidnightConfig {
     @Entry(min = 1.0f) public static float highSpeedMultiplier = 1.5f;
     @Entry public static boolean armorAffectSpeed = false;
     @Entry(min = 1.0f) public static float armorSpeedMultiplier = 1.0f;
-    @Entry public static boolean itemAffectSpeed = true;
-
+    @Entry public static boolean itemsAffectSpeed = true;
 
     @Comment(centered = true) public static Comment stun;
     @Entry public static StunType stunType = StunType.ALL;
@@ -39,13 +38,15 @@ public class ModConfig extends MidnightConfig {
     @Entry public static int altitude = 196;
     @Entry public static boolean preventRangedWeapons = true;
     @Entry public static boolean increaseKnockback = true;
-    @Entry(min = 0.0f) public static float knockbackMultiplier = 4.0f;
+    @Entry(min = 0.0f) public static float knockbackMultiplier = 3.0f;
 
     //Client config options
     @Entry(category = CLIENT) @Client public static boolean requireHoldSprint = true;
     @Entry(category = CLIENT) @Client public static boolean renderSpeedlines = true;
     @Entry(category = CLIENT) @Client public static boolean selfFlightSound = true;
     @Entry(category = CLIENT) @Client public static boolean legLiftedPose = true;
+    @Entry(category = CLIENT) @Condition(requiredModId = "entity_model_features")
+    @Client public static boolean overrideAnimations = false;
 
     public static void setConnectedToServer(boolean value) {
         connectedToServer = value;

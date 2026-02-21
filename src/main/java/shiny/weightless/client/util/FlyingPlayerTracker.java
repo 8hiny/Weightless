@@ -79,7 +79,7 @@ public class FlyingPlayerTracker {
         for (Player player : client.level.players()) {
             if (!isTrackingSound(player.getUUID()) && WeightlessComponent.flying(player)) {
                 double speed = getLerpedVelocity(player.getUUID(), client.getDeltaTracker().getGameTimeDeltaPartialTick(true)).lengthSqr();
-                if (speed > 0.1 || player.isSprinting()) {
+                if (speed > 0.13 || player.isSprinting()) {
                     boolean bl = player instanceof LocalPlayer;
                     if (!bl || ModConfig.selfFlightSound) {
                         WeightlessFlyingSoundInstance sound = new WeightlessFlyingSoundInstance(player, bl);

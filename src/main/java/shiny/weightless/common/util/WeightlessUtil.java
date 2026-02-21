@@ -1,9 +1,11 @@
 package shiny.weightless.common.util;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.Level;
@@ -11,7 +13,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import shiny.weightless.common.config.ModConfig;
-import shiny.weightless.common.component.WeightlessComponent;
 
 public final class WeightlessUtil {
 
@@ -26,7 +27,9 @@ public final class WeightlessUtil {
                 && !player.isAutoSpinAttack()
                 && !player.isFallFlying()
                 && !player.isSleeping()
-                && !player.onClimbable();
+                && !player.onClimbable()
+                && !player.isInWater()
+                && player.getFluidHeight(FluidTags.LAVA) <= player.getFluidJumpThreshold();
     }
 
     public static boolean canReceiveAltitudeBonus(Entity entity) {
@@ -37,7 +40,6 @@ public final class WeightlessUtil {
         for (int i = -radius; i <= radius; i++) {
             for (int j = -radius; j <= radius; j++) {
                 for (int k = -radius; k <= radius; k++) {
-
                     BlockPos pos = new BlockPos(entity.blockPosition().offset(i, j, k));
                     if (entity.level().getBlockState(pos).blocksMotion()) {
                         return true;
@@ -63,13 +65,15 @@ public final class WeightlessUtil {
     }
 
     public static float calcFlightSpeed(LivingEntity entity, boolean sprinting) {
-        if (entity instanceof Player player && WeightlessComponent.get(player).isStunned()) {
-            return 0.0f;
-        }
-
         float speed = ModConfig.movementSpeedAffectSpeed ? entity.getSpeed() : 0.1f;
-        speed *= sprinting ? 1.0f : 0.35f;
         speed *= ModConfig.speedMultiplier;
+
+        if (entity.isCrouching()) {
+            speed *= (float) entity.getAttributeValue(Attributes.SNEAKING_SPEED) * 2.0f;
+        }
+        else {
+            speed *= sprinting ? 1.0f : 0.35f;
+        }
 
         if (ModConfig.armorAffectSpeed) {
             speed *= Math.max(0.1f, (-0.025f * entity.getArmorValue() + 1) / ModConfig.armorSpeedMultiplier);
@@ -90,12 +94,12 @@ public final class WeightlessUtil {
             Vec3 vec3d = (d > 1.0 ? movementInput.normalize() : movementInput).scale(speed);
             float vertical = (float) Math.sqrt(1.0f - Math.abs(pitch) / 90.0f);
             float x = Mth.sin(yaw * (float) (Math.PI / 180.0)) * vertical;
-            float y = -Mth.sin(pitch * (float) (Math.PI / 180.0));
+            float y = -Mth.sin(pitch * (float) (Math.PI / 180.0)) * speed;
             float z = Mth.cos(yaw * (float) (Math.PI / 180.0)) * vertical;
 
             return new Vec3(
                     vec3d.x * z - vec3d.z * x,
-                    (vec3d.z > 0 ? y : -y) * speed * (movementInput.z != 0 ? 1.1 : 0),
+                    (vec3d.z > 0.0 ? y : -y),
                     vec3d.z * z + vec3d.x * x
             );
         }

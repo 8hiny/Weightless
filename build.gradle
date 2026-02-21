@@ -30,6 +30,12 @@ repositories {
         name = "Terraformers"
         url = "https://maven.terraformersmc.com/"
     }
+
+	maven {
+		name = "Modrinth"
+		url = "https://api.modrinth.com/maven"
+	}
+
 }
 
 dependencies {
@@ -47,6 +53,10 @@ dependencies {
 
     //Midnightlib
     modImplementation "eu.midnightdust:midnightlib:${project.midnightlib_version}"
+
+	//ETF/EMF
+	modCompileOnly "maven.modrinth:entitytexturefeatures:${project.etf_version}"
+	modCompileOnly "maven.modrinth:entity-model-features:${project.emf_version}"
 }
 
 processResources {

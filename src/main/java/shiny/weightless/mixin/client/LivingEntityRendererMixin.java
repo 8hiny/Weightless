@@ -30,12 +30,13 @@ import shiny.weightless.client.render.RenderStateDataKeys;
 import shiny.weightless.client.util.WeightlessPosing;
 import shiny.weightless.client.render.WeightlessRenderTypes;
 
-@Mixin(LivingEntityRenderer.class)
+@Mixin(value = LivingEntityRenderer.class, priority = 1100)
 public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>>
         extends EntityRenderer<T, S> {
 
-    @Shadow public abstract Identifier getTextureLocation(S livingEntityRenderState);
     @Unique private RenderType shinyRenderType;
+    @Shadow protected M model;
+    @Shadow public abstract Identifier getTextureLocation(S livingEntityRenderState);
 
     protected LivingEntityRendererMixin(EntityRendererProvider.Context context) {
         super(context);

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.AnimationUtils;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.Vec3;
@@ -19,7 +19,7 @@ public class WeightlessPosing {
         matrices.translate(0.0f, y, 0.0f);
     }
 
-    public static <T extends HumanoidModel<?>> void setAngles(T model, AvatarRenderState state) {
+    public static <T extends HumanoidModel<?>> void setAngles(T model, HumanoidRenderState state) {
         Vec3 velocity = state.getDataOrDefault(RenderStateDataKeys.VELOCITY, Vec3.ZERO);
         Vec3 movement = WeightlessUtil.calcDirectionalMovement(velocity, state.bodyRot);
         float pitch = state.getDataOrDefault(RenderStateDataKeys.PITCH, 0.0f);
@@ -91,9 +91,11 @@ public class WeightlessPosing {
         model.leftArm.yRot = Math.max(model.leftArm.yRot, model.body.yRot);
         model.rightArm.yRot = Math.min(model.rightArm.yRot, model.body.yRot);
 
-        if (Math.abs(model.body.zRot) > 0.001f) {
-            model.leftArm.zRot = Math.min(model.leftArm.zRot, model.body.zRot);
-            model.rightArm.zRot = Math.max(model.rightArm.zRot, model.body.zRot);
+        if (model.body.zRot < model.leftArm.zRot) {
+            model.leftArm.zRot = model.body.zRot;
+        }
+        if (model.body.zRot > model.rightArm.zRot) {
+            model.rightArm.zRot = model.body.zRot;
         }
 
         if (y > -0.2f) {

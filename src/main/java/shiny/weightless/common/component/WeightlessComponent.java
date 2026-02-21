@@ -172,17 +172,13 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
         }
     }
 
-    public boolean isToggled() {
-        return this.toggled;
-    }
-
     public void toggle() {
         this.toggled = !this.toggled;
         this.sync(false);
     }
 
     public boolean inAutopilot() {
-        return this.autopilot && this.provider.getFoodData().hasEnoughFood() && WeightlessUtil.canFly(this.provider);
+        return this.autopilot && !this.provider.isCrouching() && this.provider.getFoodData().hasEnoughFood() && WeightlessUtil.canFly(this.provider);
     }
 
     public void toggleAutopilot() {

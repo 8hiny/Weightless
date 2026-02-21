@@ -3,13 +3,10 @@ package shiny.weightless.mixin;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.UseEffects;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,7 +28,6 @@ public abstract class LivingEntityMixin extends Entity {
         super(entityType, level);
     }
 
-    //TODO Rebalance spear to NOT oneshot everything when flying
     @WrapWithCondition(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;tickHeadTurn(F)V"))
     private boolean weightless$preventBodyTurn(LivingEntity entity, float f) {
         if (entity instanceof Player player && WeightlessComponent.flying(player)) {
@@ -66,7 +62,7 @@ public abstract class LivingEntityMixin extends Entity {
             WeightlessComponent.get(player).setFlying(!bl3);
 
             if (WeightlessComponent.flying(player)) {
-                if (bl) movementInput = new Vec3(0, 0, 1);
+                if (bl) movementInput = new Vec3(movementInput.x, movementInput.y, 1);
 
                 float speed = WeightlessUtil.calcFlightSpeed(entity, entity.isSprinting());
                 Vec3 movement = WeightlessUtil.inputToFlightVelocity(movementInput, speed, entity.getXRot(), entity.getYRot());
@@ -76,14 +72,6 @@ public abstract class LivingEntityMixin extends Entity {
                     double x = velocity.x;
                     double y = velocity.y;
                     double z = velocity.z;
-
-                    if (entity.isCrouching()) {
-                        y *= 0.6;
-                    }
-                    else if (ModConfig.itemAffectSpeed && entity.isUsingItem()) {
-                        ItemStack stack = entity.getActiveItem();
-                        y *= Math.min(1.0, stack.getOrDefault(DataComponents.USE_EFFECTS, UseEffects.DEFAULT).speedMultiplier() * 3);
-                    }
 
                     if (Math.abs(x) < 0.003) {
                         x = 0.0;
@@ -133,7 +121,7 @@ public abstract class LivingEntityMixin extends Entity {
         return original.call(vec, scalar);
     }
 
-    @Inject(method = "hurtServer", at = @At(value = "HEAD"))
+    @Inject(method = "hurtServer", at = @At(value = "TAIL"))
     private void weightless$stunOnDamage(ServerLevel serverLevel, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         if (ModConfig.stunType != ModConfig.StunType.NONE && amount >= ModConfig.damageRequirement) {
             boolean bl = ModConfig.stunType == ModConfig.StunType.ALL

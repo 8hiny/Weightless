@@ -36,7 +36,7 @@ public class WeightlessFlyingSoundInstance extends AbstractTickableSoundInstance
             this.z = (float) this.player.getZ();
 
             float speed = (float) FlyingPlayerTracker.getVelocity(this.player.getUUID()).lengthSqr();
-            if (speed > 0.1f || this.player.isSprinting()) {
+            if (speed > 0.13f || this.player.isSprinting()) {
                 float targetVolume = (this.local ? 0.25f : 1.0f) + Mth.clamp(speed / 4.0f, 0.0f, 1.0f);
                 float targetPitch = 0.8f + Mth.clamp(speed / 4.0f, 0.0f, 1.0f);
                 if (this.age <= 10) {
