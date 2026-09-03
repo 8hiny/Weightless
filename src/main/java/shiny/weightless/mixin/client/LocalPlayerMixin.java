@@ -41,6 +41,11 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
         return original.call(useEffects) && (ModConfig.itemsAffectSpeed || !WeightlessComponent.flying(this));
     }
 
+    @WrapOperation(method = "isSuppressingSlidingDownLadder", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;isSuppressingSlidingDownLadder()Z"))
+    private boolean preventLadderSlide(LocalPlayer player, Operation<Boolean> original) {
+        return !WeightlessComponent.flying(player) && original.call(player);
+    }
+
     @ModifyReturnValue(method = "itemUseSpeedMultiplier", at = @At(value = "RETURN"))
     private float preventSpeedReduction(float original) {
         return !ModConfig.itemsAffectSpeed && WeightlessComponent.flying(this) ? 1.0f : original;

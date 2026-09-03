@@ -209,6 +209,12 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
         }
     }
 
+    public void tryStartFlying() {
+        if (this.toggled && !this.flying) {
+            this.setFlying(true);
+        }
+    }
+
     public int getFlightTicks() {
         return this.flightTicks;
     }

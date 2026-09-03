@@ -39,4 +39,9 @@ public abstract class PlayerMixin extends Avatar {
     private boolean sameBreakingSpeed(Player player, Operation<Boolean> original) {
         return original.call(player) || WeightlessComponent.flying(player);
     }
+
+    @WrapOperation(method = "onClimbable", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Avatar;onClimbable()Z"))
+    private boolean preventClimbing(Player player, Operation<Boolean> original) {
+        return !WeightlessComponent.flying(player) && original.call(player);
+    }
 }

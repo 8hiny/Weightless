@@ -26,7 +26,6 @@ public final class WeightlessUtil {
                 && !player.isAutoSpinAttack()
                 && !player.isFallFlying()
                 && !player.isSleeping()
-                && !player.onClimbable()
                 && !player.isInWater()
                 && player.getFluidHeight(FluidTags.LAVA) <= player.getFluidJumpThreshold();
     }
