@@ -29,7 +29,8 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
             if (WeightlessComponent.inAutopilot(this)) {
                 if (!this.isSprinting()) this.setSprinting(true);
             }
-            else if (this.isSprinting() && this.isCrouching() || (ModConfig.requireHoldSprint && !Minecraft.getInstance().options.keySprint.isDown())) {
+            else if (this.isSprinting() && this.isCrouching()
+                    || (ModConfig.requireHoldSprint && !Minecraft.getInstance().options.keySprint.isDown())) {
                 this.setSprinting(false);
             }
         }

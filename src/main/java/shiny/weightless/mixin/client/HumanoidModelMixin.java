@@ -31,8 +31,10 @@ public abstract class HumanoidModelMixin<T extends HumanoidRenderState> extends 
 
     @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At(value = "TAIL"))
     private void applyFlightAnimation(T state, CallbackInfo ci) {
-        if (!state.isCrouching && Boolean.TRUE.equals(state.getData(RenderStateDataKeys.WEIGHTLESS_FLYING))
-                && !(Boolean.TRUE.equals(state.getData(RenderStateDataKeys.IS_LOCAL_PLAYER)) && Minecraft.getInstance().options.getCameraType().isFirstPerson())
+        if (!state.isCrouching
+                && Boolean.TRUE.equals(state.getData(RenderStateDataKeys.WEIGHTLESS_FLYING))
+                && !(Boolean.TRUE.equals(state.getData(RenderStateDataKeys.IS_LOCAL_PLAYER))
+                        && Minecraft.getInstance().options.getCameraType().isFirstPerson())
         ) {
             WeightlessPosing.setAngles((HumanoidModel<T>) (Object) this, state);
         }
