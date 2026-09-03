@@ -1,7 +1,14 @@
 package shiny.weightless.common.config;
 
 import eu.midnightdust.lib.config.MidnightConfig;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import shiny.weightless.common.Weightless;
+import shiny.weightless.common.util.WeightlessUtil;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -40,9 +47,8 @@ public class ModConfig extends MidnightConfig {
     @Entry public static boolean increaseKnockback = true;
     @Entry(min = 0.0f) public static float knockbackMultiplier = 3.0f;
 
-    //Client config options
+    //Client config options //TODO Fix client options being synced via the server, fix them resetting when on a server
     @Entry(category = CLIENT) @Client public static boolean requireHoldSprint = true;
-    @Entry(category = CLIENT) @Client public static boolean renderSpeedlines = true;
     @Entry(category = CLIENT) @Client public static boolean selfFlightSound = true;
     @Entry(category = CLIENT) @Client public static boolean legLiftedPose = true;
     @Entry(category = CLIENT) @Condition(requiredModId = "entity_model_features")
@@ -107,6 +113,38 @@ public class ModConfig extends MidnightConfig {
         if (!connectedToServer) {
             super.writeChanges();
         }
+    }
+
+    public static float calcFlightSpeed(LivingEntity entity, boolean sprinting) {
+        float speed = movementSpeedAffectSpeed ? entity.getSpeed() : 0.1f;
+        speed *= speedMultiplier;
+
+        if (entity.isCrouching()) {
+            speed *= (float) entity.getAttributeValue(Attributes.SNEAKING_SPEED) * 2.0f;
+        }
+        else {
+            speed *= sprinting ? 1.0f : 0.35f;
+        }
+
+        if (armorAffectSpeed) {
+            speed *= Math.max(0.1f, (-0.025f * entity.getArmorValue() + 1) / armorSpeedMultiplier);
+        }
+
+        if (increaseSpeedWhenHigh && canReceiveAltitudeBonus(entity)) {
+            speed *= highSpeedMultiplier;
+        }
+        return speed;
+    }
+
+    public static boolean canReceiveAltitudeBonus(Entity entity) {
+        return entity.position().y >= altitude && !WeightlessUtil.isNearBlock(entity, 8);
+    }
+
+    public static boolean shouldStun(DamageSource source, float amount) {
+        return amount >= damageRequirement
+                && (stunType == StunType.ALL
+                || (stunType == StunType.PLAYER_ONLY && source.getEntity() instanceof Player)
+                || (stunType == StunType.MOB_ONLY && source.getEntity() instanceof Mob));
     }
 
     public enum StunType {

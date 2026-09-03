@@ -24,7 +24,7 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     }
 
     @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;aiStep()V"))
-    private void weightless$updateSprinting(CallbackInfo ci) {
+    private void updateSprinting(CallbackInfo ci) {
         if (WeightlessComponent.flying(this)) {
             if (WeightlessComponent.inAutopilot(this)) {
                 if (!this.isSprinting()) this.setSprinting(true);
@@ -36,12 +36,12 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     }
 
     @WrapOperation(method = "isSlowDueToUsingItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/component/UseEffects;canSprint()Z"))
-    private boolean weightless$allowSpringWhileUsingItem(UseEffects useEffects, Operation<Boolean> original) {
+    private boolean allowSpringWhileUsingItem(UseEffects useEffects, Operation<Boolean> original) {
         return original.call(useEffects) && (ModConfig.itemsAffectSpeed || !WeightlessComponent.flying(this));
     }
 
     @ModifyReturnValue(method = "itemUseSpeedMultiplier", at = @At(value = "RETURN"))
-    private float weightless$preventSpeedReduction(float original) {
+    private float preventSpeedReduction(float original) {
         return !ModConfig.itemsAffectSpeed && WeightlessComponent.flying(this) ? 1.0f : original;
     }
 }

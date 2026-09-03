@@ -23,21 +23,20 @@ public abstract class PlayerMixin extends Avatar {
     }
 
     @Inject(method = "causeFallDamage", at = @At(value = "HEAD"), cancellable = true)
-    private void weightless$preventFallDamage(double fallDistance, float damageMultiplier, DamageSource source, CallbackInfoReturnable<Boolean> cir) {
+    private void preventFallDamage(double fallDistance, float damageMultiplier, DamageSource source, CallbackInfoReturnable<Boolean> cir) {
         Player player = (Player) (Object) this;
-
         if (WeightlessComponent.has(player)) {
             cir.setReturnValue(false);
         }
     }
 
     @WrapWithCondition(method = "causeExtraKnockback", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;setSprinting(Z)V"))
-    private boolean weightless$staySprinting(Player player, boolean value) {
+    private boolean staySprinting(Player player, boolean value) {
         return !WeightlessComponent.flying(player);
     }
 
     @WrapOperation(method = "getDestroySpeed", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;onGround()Z"))
-    private boolean weightless$sameBreakingSpeed(Player player, Operation<Boolean> original) {
+    private boolean sameBreakingSpeed(Player player, Operation<Boolean> original) {
         return original.call(player) || WeightlessComponent.flying(player);
     }
 }

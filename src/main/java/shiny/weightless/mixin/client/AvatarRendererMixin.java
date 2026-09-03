@@ -12,21 +12,20 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import shiny.weightless.client.WeightlessClient;
-import shiny.weightless.client.render.RenderStateDataKeys;
+import shiny.weightless.client.RenderStateDataKeys;
 import shiny.weightless.common.component.WeightlessComponent;
-import shiny.weightless.client.util.FlyingPlayerTracker;
+import shiny.weightless.client.util.PlayerFlightTracker;
 
 @Mixin(AvatarRenderer.class)
-public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & ClientAvatarEntity>
-        extends LivingEntityRenderer<AvatarlikeEntity, AvatarRenderState, PlayerModel> {
+public abstract class AvatarRendererMixin<T extends Avatar & ClientAvatarEntity>
+        extends LivingEntityRenderer<T, AvatarRenderState, PlayerModel> {
 
     public AvatarRendererMixin(EntityRendererProvider.Context context, PlayerModel entityModel, float f) {
         super(context, entityModel, f);
     }
 
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V", at = @At(value = "TAIL"))
-    private void weightless$updateRenderdata(AvatarlikeEntity avatar, AvatarRenderState state, float tickDelta, CallbackInfo ci) {
+    private void updateRenderdata(T avatar, AvatarRenderState state, float tickDelta, CallbackInfo ci) {
         if (avatar instanceof Player player) {
             boolean bl = WeightlessComponent.flying(player);
             if (bl) {
@@ -37,9 +36,8 @@ public abstract class AvatarRendererMixin<AvatarlikeEntity extends Avatar & Clie
 
             state.setData(RenderStateDataKeys.WEIGHTLESS_FLYING, bl);
             state.setData(RenderStateDataKeys.IS_LOCAL_PLAYER, player.isLocalPlayer());
-            state.setData(RenderStateDataKeys.IS_SHINY, player.getUUID().equals(WeightlessClient.SHINY_UUID));
             state.setData(RenderStateDataKeys.FLIGHT_TICKS, WeightlessComponent.get(player).getFlightTicks());
-            state.setData(RenderStateDataKeys.VELOCITY, FlyingPlayerTracker.getLerpedVelocity(player.getUUID(), tickDelta));
+            state.setData(RenderStateDataKeys.VELOCITY, PlayerFlightTracker.getInstance().getLerpedVelocity(player.getUUID(), tickDelta));
             state.setData(RenderStateDataKeys.PITCH, player.getXRot(tickDelta));
         }
     }

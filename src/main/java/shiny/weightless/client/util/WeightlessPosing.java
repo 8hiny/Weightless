@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.Vec3;
-import shiny.weightless.client.render.RenderStateDataKeys;
+import shiny.weightless.client.RenderStateDataKeys;
 import shiny.weightless.common.config.ModConfig;
 import shiny.weightless.common.util.WeightlessUtil;
 

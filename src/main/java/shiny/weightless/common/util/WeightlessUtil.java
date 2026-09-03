@@ -4,8 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.Level;
@@ -32,10 +31,6 @@ public final class WeightlessUtil {
                 && player.getFluidHeight(FluidTags.LAVA) <= player.getFluidJumpThreshold();
     }
 
-    public static boolean canReceiveAltitudeBonus(Entity entity) {
-        return entity.position().y >= ModConfig.altitude && !WeightlessUtil.isNearBlock(entity, 8);
-    }
-
     public static boolean isNearBlock(Entity entity, int radius) {
         for (int i = -radius; i <= radius; i++) {
             for (int j = -radius; j <= radius; j++) {
@@ -53,7 +48,9 @@ public final class WeightlessUtil {
     public static boolean isCollidedWithBlock(Entity entity) {
         Level world = entity.level();
         AABB box = entity.getBoundingBox().expandTowards(0, -0.01, 0);
-        BlockCollisions<VoxelShape> spliterator = new BlockCollisions<>(world, entity, box, false, (mutable, voxelShape) -> voxelShape);
+        BlockCollisions<VoxelShape> spliterator = new BlockCollisions<>(
+                world, entity, box, false, (mutable, voxelShape) -> voxelShape
+        );
 
         while (spliterator.hasNext()) {
             VoxelShape shape = spliterator.next();
@@ -62,27 +59,6 @@ public final class WeightlessUtil {
             }
         }
         return false;
-    }
-
-    public static float calcFlightSpeed(LivingEntity entity, boolean sprinting) {
-        float speed = ModConfig.movementSpeedAffectSpeed ? entity.getSpeed() : 0.1f;
-        speed *= ModConfig.speedMultiplier;
-
-        if (entity.isCrouching()) {
-            speed *= (float) entity.getAttributeValue(Attributes.SNEAKING_SPEED) * 2.0f;
-        }
-        else {
-            speed *= sprinting ? 1.0f : 0.35f;
-        }
-
-        if (ModConfig.armorAffectSpeed) {
-            speed *= Math.max(0.1f, (-0.025f * entity.getArmorValue() + 1) / ModConfig.armorSpeedMultiplier);
-        }
-
-        if (ModConfig.increaseSpeedWhenHigh && canReceiveAltitudeBonus(entity)) {
-            speed *= ModConfig.highSpeedMultiplier;
-        }
-        return speed;
     }
 
     public static Vec3 inputToFlightVelocity(Vec3 movementInput, float speed, float pitch, float yaw) {
@@ -99,7 +75,7 @@ public final class WeightlessUtil {
 
             return new Vec3(
                     vec3d.x * z - vec3d.z * x,
-                    (vec3d.z > 0.0 ? y : -y),
+                    (vec3d.z > 0.0 ? y : -y) * (movementInput.z != 0.0 ? 1.0 : 0.0),
                     vec3d.z * z + vec3d.x * x
             );
         }
@@ -120,6 +96,44 @@ public final class WeightlessUtil {
             y = Mth.clamp(y, -0.75, 0.75);
             z = Mth.clamp(z, -1.0, 1.0);
             return new Vec3(x, y, z);
+        }
+    }
+
+    public static Vec3 clampNearZero(Vec3 velocity) {
+        double x = velocity.x;
+        double y = velocity.y;
+        double z = velocity.z;
+
+        if (Math.abs(x) < 0.003) {
+            x = 0.0;
+        }
+        if (Math.abs(y) < 0.003) {
+            y = 0.0;
+        }
+        if (Math.abs(z) < 0.003) {
+            z = 0.0;
+        }
+        return new Vec3(x, y, z);
+    }
+
+    public static void affectForFlight(Player player, Vec3 movementInput) {
+        if (player.canSimulateMovement()) {
+            float speed = ModConfig.calcFlightSpeed(player, player.isSprinting());
+            Vec3 movement = inputToFlightVelocity(movementInput, speed, player.getXRot(), player.getYRot());
+            Vec3 velocity = clampNearZero(
+                    player.getDeltaMovement().add(movement).multiply(0.85, 0.85, 0.85)
+            );
+
+            player.setDeltaMovement(velocity);
+            player.move(MoverType.SELF, player.getDeltaMovement());
+        }
+
+        float f = (float) (player.getY() - player.yOld);
+        if (f < 0.0f) {
+            player.fallDistance = Math.abs(f) * 10.0f;
+        }
+        else {
+            player.fallDistance = 0.0f;
         }
     }
 }

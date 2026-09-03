@@ -12,7 +12,7 @@ import shiny.weightless.common.component.WeightlessComponent;
 public class ServerGamePacketListenerMixin {
 
     @WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isFallFlying()Z"))
-    private boolean weightless$disableFlyingMovementCheck(ServerPlayer player, Operation<Boolean> original) {
+    private boolean disableFlyingMovementCheck(ServerPlayer player, Operation<Boolean> original) {
         return original.call(player) || WeightlessComponent.flying(player);
     }
 }

@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import shiny.weightless.common.component.WeightlessComponent;
 import shiny.weightless.common.config.ModConfig;
-import shiny.weightless.common.util.WeightlessUtil;
 
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayerMixin extends Player {
@@ -20,21 +19,20 @@ public abstract class ServerPlayerMixin extends Player {
     }
 
     @Inject(method = "checkMovementStatistics", at = @At(value = "HEAD"))
-    private void weightless$applyExhaustionWhenFlying(double dx, double dy, double dz, CallbackInfo ci) {
+    private void applyExhaustionWhenFlying(double dx, double dy, double dz, CallbackInfo ci) {
         if (ModConfig.exhaust) {
             if (!this.isPassenger() && WeightlessComponent.flying(this)) {
                 float exhaustion = ModConfig.hungerMultiplier;
 
-                if (WeightlessUtil.canReceiveAltitudeBonus(this) && ModConfig.reduceHungerWhenHigh) {
+                if (ModConfig.canReceiveAltitudeBonus(this) && ModConfig.reduceHungerWhenHigh) {
                     exhaustion *= ModConfig.highHungerReduction;
                 }
 
                 float speed = (float) (dx * dx + dy * dy + dz * dz);
-                if (exhaustion > 0.0f && speed >  1.0E-7) {
+                if (exhaustion > 0.0f && speed > 1.0e-7) {
                     if (this.isSprinting()) {
                         this.causeFoodExhaustion(0.04f * exhaustion);
-                    }
-                    else {
+                    } else {
                         this.causeFoodExhaustion(0.001f * exhaustion);
                     }
                 }

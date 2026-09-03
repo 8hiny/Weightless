@@ -6,18 +6,18 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import shiny.weightless.client.util.FlyingPlayerTracker;
+import shiny.weightless.client.util.PlayerFlightTracker;
 import shiny.weightless.common.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
 
-public class WeightlessFlyingSoundInstance extends AbstractTickableSoundInstance {
+public class WeightlessSoundInstance extends AbstractTickableSoundInstance {
 
     private final Player player;
     private final boolean local;
     private int lastAge;
     private int age;
 
-    public WeightlessFlyingSoundInstance(Player player, boolean local) {
+    public WeightlessSoundInstance(Player player, boolean local) {
         super(local ? SoundEvents.ELYTRA_FLYING : Weightless.OTHER_WEIGHTLESS_FLYING, SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
         this.player = player;
         this.local = local;
@@ -35,7 +35,7 @@ public class WeightlessFlyingSoundInstance extends AbstractTickableSoundInstance
             this.y = (float) this.player.getY();
             this.z = (float) this.player.getZ();
 
-            float speed = (float) FlyingPlayerTracker.getVelocity(this.player.getUUID()).lengthSqr();
+            float speed = (float) PlayerFlightTracker.getInstance().getVelocity(this.player.getUUID()).lengthSqr();
             if (speed > 0.13f || this.player.isSprinting()) {
                 float targetVolume = (this.local ? 0.25f : 1.0f) + Mth.clamp(speed / 4.0f, 0.0f, 1.0f);
                 float targetPitch = 0.8f + Mth.clamp(speed / 4.0f, 0.0f, 1.0f);
@@ -57,7 +57,7 @@ public class WeightlessFlyingSoundInstance extends AbstractTickableSoundInstance
                 this.pitch = Mth.lerp(0.1f, this.pitch, 0.0f);
             }
             else {
-                FlyingPlayerTracker.removeSound(this.player.getUUID());
+                PlayerFlightTracker.getInstance().removeSound(this.player.getUUID());
                 this.stop();
             }
         }

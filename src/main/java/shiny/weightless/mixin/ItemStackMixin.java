@@ -20,7 +20,7 @@ import shiny.weightless.common.component.WeightlessComponent;
 public abstract class ItemStackMixin {
 
     @Inject(method = "use", at = @At(value = "HEAD"), cancellable = true)
-    private void weightless$preventItemUse(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+    private void preventItemUse(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         if (ModConfig.preventRangedWeapons) {
             ItemStack stack = player.getItemInHand(hand);
             if (WeightlessComponent.flying(player) && stack.is(Weightless.PROJECTILE_WEAPONS)) {
@@ -30,8 +30,9 @@ public abstract class ItemStackMixin {
     }
 
     @WrapWithCondition(method = "onUseTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/Item;onUseTick(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;I)V"))
-    private boolean weightless$preventItemUsageTick(Item instance, Level level, LivingEntity entity, ItemStack stack, int i) {
-        if (ModConfig.preventRangedWeapons && entity instanceof Player player && WeightlessComponent.flying(player) && stack.is(Weightless.PROJECTILE_WEAPONS)) {
+    private boolean preventItemUsageTick(Item instance, Level level, LivingEntity entity, ItemStack stack, int i) {
+        if (ModConfig.preventRangedWeapons && entity instanceof Player player
+                && WeightlessComponent.flying(player) && stack.is(Weightless.PROJECTILE_WEAPONS)) {
             player.stopUsingItem();
             return false;
         }

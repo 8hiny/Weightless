@@ -7,8 +7,9 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
-import shiny.weightless.client.util.FlyingPlayerTracker;
+import shiny.weightless.client.util.PlayerFlightTracker;
 import shiny.weightless.common.Weightless;
 import shiny.weightless.common.component.WeightlessComponent;
 import shiny.weightless.common.config.ModConfig;
@@ -16,12 +17,7 @@ import shiny.weightless.common.network.SyncConfigPayload;
 import shiny.weightless.common.network.FlyingSoundPayload;
 import traben.entity_model_features.EMFAnimationApi;
 
-import java.util.UUID;
-
 public class WeightlessClient implements ClientModInitializer {
-
-    //Me!
-    public static final UUID SHINY_UUID = UUID.fromString("a9bcfe9b-bb80-463d-848e-11e0b03f2b6e");
 
     //Keybinds
     public static final KeyMapping.Category MAIN_CATEGORY = KeyMapping.Category.register(Weightless.id("weightless"));
@@ -39,33 +35,11 @@ public class WeightlessClient implements ClientModInitializer {
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ModConfig.setConnectedToServer(false));
 
-        ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if (TOGGLE_WEIGHTLESS.isDown() && !wasWeightlessPressed) {
-                WeightlessComponent.clientToggled = !WeightlessComponent.clientToggled;
-                wasWeightlessPressed = true;
-                TOGGLE_WEIGHTLESS.setDown(false);
-            }
-            else if (wasWeightlessPressed) {
-                wasWeightlessPressed = false;
-            }
-
-            if (WeightlessComponent.clientToggled) {
-                if (AUTOPILOT.isDown() && !wasAutopilotPressed) {
-                    WeightlessComponent.clientAutopilot = !WeightlessComponent.clientAutopilot;
-                    wasAutopilotPressed = true;
-                    AUTOPILOT.setDown(false);
-                } else if (wasAutopilotPressed) {
-                    wasAutopilotPressed = false;
-                }
-            }
-            else if (WeightlessComponent.clientAutopilot) {
-                WeightlessComponent.clientAutopilot = false;
-            }
-        });
+        ClientTickEvents.START_CLIENT_TICK.register(WeightlessClient::handleFlightKeybinds);
         WeightlessComponent.init();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.level != null) {
-                FlyingPlayerTracker.update(client);
+                PlayerFlightTracker.getInstance().update(client);
             }
         });
 
@@ -73,6 +47,30 @@ public class WeightlessClient implements ClientModInitializer {
             EMFAnimationApi.registerVanillaModelCondition(emfEntity ->
                     ModConfig.overrideAnimations && emfEntity instanceof Player player && !player.isCrouching() && WeightlessComponent.flying(player)
             );
+        }
+    }
+
+    private static void handleFlightKeybinds(Minecraft client) {
+        if (TOGGLE_WEIGHTLESS.isDown() && !wasWeightlessPressed) {
+            WeightlessComponent.clientToggled = !WeightlessComponent.clientToggled;
+            wasWeightlessPressed = true;
+            TOGGLE_WEIGHTLESS.setDown(false);
+        }
+        else if (wasWeightlessPressed) {
+            wasWeightlessPressed = false;
+        }
+
+        if (WeightlessComponent.clientToggled) {
+            if (AUTOPILOT.isDown() && !wasAutopilotPressed) {
+                WeightlessComponent.clientAutopilot = !WeightlessComponent.clientAutopilot;
+                wasAutopilotPressed = true;
+                AUTOPILOT.setDown(false);
+            } else if (wasAutopilotPressed) {
+                wasAutopilotPressed = false;
+            }
+        }
+        else if (WeightlessComponent.clientAutopilot) {
+            WeightlessComponent.clientAutopilot = false;
         }
     }
 }

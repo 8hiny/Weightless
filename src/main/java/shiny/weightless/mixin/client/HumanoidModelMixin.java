@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import shiny.weightless.client.render.RenderStateDataKeys;
+import shiny.weightless.client.RenderStateDataKeys;
 import shiny.weightless.client.util.WeightlessPosing;
 
 @Mixin(HumanoidModel.class)
@@ -22,7 +22,7 @@ public abstract class HumanoidModelMixin<T extends HumanoidRenderState> extends 
     }
 
     @ModifyVariable(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At(value = "STORE"), ordinal = 2)
-    private float weightless$overrideWalkAnimation(float h, @Local(argsOnly = true) HumanoidRenderState state) {
+    private float overrideWalkAnimation(float h, @Local(argsOnly = true) HumanoidRenderState state) {
         if (!state.isCrouching && Boolean.TRUE.equals(state.getData(RenderStateDataKeys.WEIGHTLESS_FLYING))) {
             h = 0.0f;
         }
@@ -30,7 +30,7 @@ public abstract class HumanoidModelMixin<T extends HumanoidRenderState> extends 
     }
 
     @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At(value = "TAIL"))
-    private void weightless$applyFlightAnimation(T state, CallbackInfo ci) {
+    private void applyFlightAnimation(T state, CallbackInfo ci) {
         if (!state.isCrouching && Boolean.TRUE.equals(state.getData(RenderStateDataKeys.WEIGHTLESS_FLYING))
                 && !(Boolean.TRUE.equals(state.getData(RenderStateDataKeys.IS_LOCAL_PLAYER)) && Minecraft.getInstance().options.getCameraType().isFirstPerson())
         ) {

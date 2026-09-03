@@ -58,7 +58,8 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
     }
 
     private void sync(boolean simplified) {
-        ModComponents.WEIGHTLESS.sync(this.provider, (buf, recipient) -> this.writeSyncPacket(buf, recipient, simplified));
+        ModComponents.WEIGHTLESS.sync(this.provider,
+                (buf, recipient) -> this.writeSyncPacket(buf, recipient, simplified));
     }
 
     private static void clientTick(Minecraft client) {
@@ -150,8 +151,7 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
         if (buf.readBoolean()) {
             this.remainingStunTicks = buf.readInt();
             this.flightTicks = buf.readInt();
-        }
-        else {
+        } else {
             AutoSyncedComponent.super.applySyncPacket(buf);
         }
     }
@@ -166,8 +166,7 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
         if (simplified) {
             buf.writeInt(this.remainingStunTicks);
             buf.writeInt(this.flightTicks);
-        }
-        else {
+        } else {
             AutoSyncedComponent.super.writeSyncPacket(buf, recipient);
         }
     }
@@ -178,7 +177,10 @@ public class WeightlessComponent implements AutoSyncedComponent, ServerTickingCo
     }
 
     public boolean inAutopilot() {
-        return this.autopilot && !this.provider.isCrouching() && this.provider.getFoodData().hasEnoughFood() && WeightlessUtil.canFly(this.provider);
+        return this.autopilot
+                && !this.provider.isCrouching()
+                && this.provider.getFoodData().hasEnoughFood()
+                && WeightlessUtil.canFly(this.provider);
     }
 
     public void toggleAutopilot() {

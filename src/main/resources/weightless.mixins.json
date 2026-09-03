@@ -12,13 +12,9 @@
   ],
   "client": [
     "client.AvatarRendererMixin",
-    "client.GameRendererMixin",
     "client.HumanoidModelMixin",
-    "client.LevelRendererMixin",
     "client.LivingEntityRendererMixin",
-    "client.LocalPlayerMixin",
-    "client.PostChainAccessor",
-    "client.PostPassAccessor"
+    "client.LocalPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
