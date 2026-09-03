@@ -54,6 +54,38 @@ public class ModConfig extends MidnightConfig {
     @Entry(category = CLIENT) @Condition(requiredModId = "entity_model_features")
     @Client public static boolean overrideAnimations = false;
 
+    public static boolean canReceiveAltitudeBonus(Entity entity) {
+        return entity.position().y >= altitude && !WeightlessUtil.isNearBlock(entity, 8);
+    }
+
+    public static boolean shouldStun(DamageSource source, float amount) {
+        return amount >= damageRequirement
+                && (stunType == StunType.ALL
+                || (stunType == StunType.PLAYER_ONLY && source.getEntity() instanceof Player)
+                || (stunType == StunType.MOB_ONLY && source.getEntity() instanceof Mob));
+    }
+
+    public static float calcFlightSpeed(LivingEntity entity, boolean sprinting) {
+        float speed = movementSpeedAffectSpeed ? entity.getSpeed() : 0.1f;
+        speed *= speedMultiplier;
+
+        if (entity.isCrouching()) {
+            speed *= (float) entity.getAttributeValue(Attributes.SNEAKING_SPEED) * 2.0f;
+        }
+        else {
+            speed *= sprinting ? 1.0f : 0.35f;
+        }
+
+        if (armorAffectSpeed) {
+            speed *= Math.max(0.1f, (-0.025f * entity.getArmorValue() + 1) / armorSpeedMultiplier);
+        }
+
+        if (increaseSpeedWhenHigh && canReceiveAltitudeBonus(entity)) {
+            speed *= highSpeedMultiplier;
+        }
+        return speed;
+    }
+
     public static void setConnectedToServer(boolean value) {
         connectedToServer = value;
     }
@@ -113,38 +145,6 @@ public class ModConfig extends MidnightConfig {
         if (!connectedToServer) {
             super.writeChanges();
         }
-    }
-
-    public static float calcFlightSpeed(LivingEntity entity, boolean sprinting) {
-        float speed = movementSpeedAffectSpeed ? entity.getSpeed() : 0.1f;
-        speed *= speedMultiplier;
-
-        if (entity.isCrouching()) {
-            speed *= (float) entity.getAttributeValue(Attributes.SNEAKING_SPEED) * 2.0f;
-        }
-        else {
-            speed *= sprinting ? 1.0f : 0.35f;
-        }
-
-        if (armorAffectSpeed) {
-            speed *= Math.max(0.1f, (-0.025f * entity.getArmorValue() + 1) / armorSpeedMultiplier);
-        }
-
-        if (increaseSpeedWhenHigh && canReceiveAltitudeBonus(entity)) {
-            speed *= highSpeedMultiplier;
-        }
-        return speed;
-    }
-
-    public static boolean canReceiveAltitudeBonus(Entity entity) {
-        return entity.position().y >= altitude && !WeightlessUtil.isNearBlock(entity, 8);
-    }
-
-    public static boolean shouldStun(DamageSource source, float amount) {
-        return amount >= damageRequirement
-                && (stunType == StunType.ALL
-                || (stunType == StunType.PLAYER_ONLY && source.getEntity() instanceof Player)
-                || (stunType == StunType.MOB_ONLY && source.getEntity() instanceof Mob));
     }
 
     public enum StunType {

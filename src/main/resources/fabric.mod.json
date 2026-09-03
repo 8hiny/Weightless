@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "weightless",
 	"version": "${version}",
-	"name": "Weightless..?",
+	"name": "Weightless",
 	"description": "A highly configurable, semi survival-friendly flight mod",
 	"authors": [
 		"Shiny (8hiny)"
