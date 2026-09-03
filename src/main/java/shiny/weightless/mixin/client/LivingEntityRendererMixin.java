@@ -31,7 +31,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
         if (state instanceof HumanoidRenderState humanoidState) {
             if (Boolean.TRUE.equals(humanoidState.getData(RenderStateDataKeys.WEIGHTLESS_FLYING))) {
                 WeightlessPosing.updateTransforms(stack,
-                        humanoidState.getData(RenderStateDataKeys.FLIGHT_TICKS),
+                        humanoidState.getDataOrDefault(RenderStateDataKeys.FLIGHT_TICKS, 0),
                         Minecraft.getInstance().getDeltaTracker().getRealtimeDeltaTicks()
                 );
             }
